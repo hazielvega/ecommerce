@@ -1,0 +1,1 @@
+<h1>¡Pago Pendiente!</h1>

@@ -9,12 +9,14 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     use HasApiTokens;
     use HasFactory;
     use HasProfilePhoto;
+    use HasRoles;
     use Notifiable;
     use TwoFactorAuthenticatable;
 
@@ -25,9 +27,14 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'last_name', 
         'email',
+        'document_type',
+        'document_number',
+        'phone',
         'password',
     ];
+    
 
     /**
      * The attributes that should be hidden for serialization.
@@ -61,5 +68,18 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+
+    // Relación uno a muchos con Address
+    public function addresses()
+    {
+        return $this->hasMany(Address::class);
+    }
+
+    // Relacion con destinatarios Receivers
+    public function receivers()
+    {
+        return $this->hasMany(Receiver::class);
     }
 }

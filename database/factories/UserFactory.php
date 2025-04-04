@@ -28,6 +28,10 @@ class UserFactory extends Factory
     {
         return [
             'name' => fake()->name(),
+            'last_name' => fake()->lastName(),
+            'document_type' => fake()->numberBetween(1, 2),
+            'document_number' => fake()->unique()->numberBetween(10000000, 99999999),
+            'phone' => fake()->unique()->phoneNumber(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
