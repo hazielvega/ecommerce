@@ -35,14 +35,5 @@ class RoleSeeder extends Seeder
         // Voy a recuperar el usuario al que le quiero asignar el rol
         $user = User::find(1);
         $user->assignRole('admin');
-
-        $driver = Role::create([
-           'name' => 'driver', 
-        ]);
-
-        $driver->syncPermissions([
-            'access dashboard',
-            'manage shipments',
-        ]);
     }
 }

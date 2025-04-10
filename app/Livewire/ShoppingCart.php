@@ -10,41 +10,91 @@ class ShoppingCart extends Component
 {
     public function mount()
     {
-        // Especifico sobre que instancia estoy trabajando
         Cart::instance('shopping');
     }
 
-
-    // Metoto para obtener el subtotal del carrito
     #[Computed()]
     public function subtotal()
     {
         return Cart::content()->filter(function ($item) {
-            // Quiero filtrar los productos que tengan un qty menor que el stock disponible
             return $item->qty <= $item->options['stock'];
         })->sum(function ($item) {
-            // Sumo el precio por la cantidad
-            return $item->subtotal;
+            return $item->price * $item->qty;
         });
     }
 
+    #[Computed()]
+    public function hasDiscounts()
+    {
+        return Cart::content()->contains(function ($item) {
+            return isset($item->options['offer']);
+        });
+    }
 
-    // Metodo para incrementar la cantidad de un item
+    #[Computed()]
+    public function discountTotal()
+    {
+        return Cart::content()->filter(function ($item) {
+            return $item->qty <= $item->options['stock'] && isset($item->options['offer']);
+        })->sum(function ($item) {
+            return ($item->options['original_price'] - $item->price) * $item->qty;
+        });
+    }
+
+    #[Computed()]
+    public function totalWithDiscounts()
+    {
+        return $this->subtotal();
+    }
+
+    #[Computed()]
+    public function appliedOffers()
+    {
+        $offers = [];
+
+        Cart::content()->each(function ($item) use (&$offers) {
+            // Verificar que el item tenga oferta, esté en stock y el descuento sea aplicable
+            if (
+                isset($item->options['offer']) &&
+                $item->qty <= $item->options['stock'] &&
+                $item->price < $item->options['original_price'] &&
+                !array_key_exists($item->options['offer']['offer_id'], $offers)
+            ) {
+
+                $offers[$item->options['offer']['offer_id']] = [
+                    'offer_id' => $item->options['offer']['offer_id'],
+                    'name' => $item->options['offer']['offer_name'],
+                    'discount_percent' => $item->options['offer']['discount_percent'],
+                    'original_price' => $item->options['original_price'],
+                    'final_price' => $item->price
+                ];
+            }
+        });
+        return array_values($offers);
+    }
+
     public function increase($rowId)
     {
         Cart::instance('shopping');
+        $item = Cart::get($rowId);
 
-        Cart::update($rowId, Cart::get($rowId)->qty + 1);
+        if ($item->qty < $item->options['stock']) {
+            Cart::update($rowId, $item->qty + 1);
 
-        if (auth()->check()) {
-            Cart::store(auth()->id());
+            if (auth()->check()) {
+                Cart::store(auth()->id());
+            }
+
+            $this->dispatch('cartUpdated', Cart::count());
+        } else {
+            $this->dispatch('swal', [
+                'icon' => 'warning',
+                'title' => 'Stock máximo',
+                'text' => 'No puedes agregar más unidades de este producto',
+            ]);
         }
-
-        // Actualizo la cantidad de items del carrito en el icono
-        $this->dispatch('cartUpdated', Cart::count());
     }
 
-    // Metodo para decrementar la cantidad de un item
     public function decrease($rowId)
     {
         Cart::instance('shopping');
@@ -60,11 +110,9 @@ class ShoppingCart extends Component
             Cart::store(auth()->id());
         }
 
-        // Actualizo la cantidad de items del carrito en el icono
         $this->dispatch('cartUpdated', Cart::count());
     }
 
-    // Eliminar un item del carrito
     public function remove($rowId)
     {
         Cart::instance('shopping');
@@ -74,52 +122,65 @@ class ShoppingCart extends Component
             Cart::store(auth()->id());
         }
 
-        // Actualizo la cantidad de items del carrito en el icono
         $this->dispatch('cartUpdated', Cart::count());
+
+        $this->dispatch('swal', [
+            'icon' => 'success',
+            'title' => 'Eliminado',
+            'text' => 'El producto fue removido del carrito',
+        ]);
     }
 
-    // Metodo para vaciar el carrito
     public function clear()
     {
         Cart::instance('shopping');
-        Cart::destroy();
 
-        if (auth()->check()) {
-            Cart::store(auth()->id());
+        if (Cart::count() > 0) {
+            Cart::destroy();
+
+            if (auth()->check()) {
+                Cart::store(auth()->id());
+            }
+
+            $this->dispatch('cartUpdated', Cart::count());
+
+            $this->dispatch('swal', [
+                'icon' => 'success',
+                'title' => 'Carrito vaciado',
+                'text' => 'Todos los productos fueron removidos',
+            ]);
         }
-
-        // Actualizo la cantidad de items del carrito en el icono        
-        $this->dispatch('cartUpdated', Cart::count());
     }
 
-    // Metodo para validar que el carrito no esté vacio antes de continuar
     public function validateBeforeCheckout()
     {
         Cart::instance('shopping');
-        $content = Cart::content()->filter(function ($item) {
+        $validItems = Cart::content()->filter(function ($item) {
             return $item->qty <= $item->options['stock'];
         });
 
-        // dd($content);
+        if ($validItems->isEmpty()) {
+            $message = "No hay productos válidos en tu carrito. ";
 
-        // Verifica si el contenido del carrito es vacio
-        if ($content->isEmpty()) {
-            $message = "No has seleccionado ningun producto:\n";
+            $outOfStockItems = Cart::content()->filter(function ($item) {
+                return $item->qty > $item->options['stock'];
+            });
 
-            // Emitir evento para mostrar alerta en la vista
+            if ($outOfStockItems->isNotEmpty()) {
+                $message .= "Algunos productos no tienen suficiente stock disponible.";
+            }
+
             $this->dispatch('swal', [
-                'icon' => 'warning',
-                'title' => 'Atención',
+                'icon' => 'error',
+                'title' => 'Error en el carrito',
                 'text' => $message,
             ]);
 
             return;
         }
 
-        // Si la validación es exitosa, redirigir a la carga de direcciones
         return redirect()->route('shipping.index');
     }
-
 
     public function render()
     {

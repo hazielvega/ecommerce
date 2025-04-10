@@ -23,14 +23,4 @@ class Offer extends Model
     public function products(): BelongsToMany {
         return $this->belongsToMany(Product::class, 'offer_products');
     }
-
-    // Relación con categorías
-    public function categories(): BelongsToMany {
-        return $this->belongsToMany(Category::class, 'offer_categories');
-    }
-
-    // Relación con subcategorías
-    public function subcategories(): BelongsToMany {
-        return $this->belongsToMany(Subcategory::class, 'offer_subcategories');
-    }
 }

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\OptionController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\SubcategoryController;
 use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\admin\SettingController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ReportController;
 use App\Livewire\Admin\Users\UserComponent;
@@ -16,8 +17,10 @@ Route::get('/', function () {
     return view('admin.dashboard');
 })->middleware('can:access dashboard')->name('dashboard');
 
-Route::get('/options', [OptionController::class, 'index'])->middleware('can:manage options')->name('options.index');
+// Ruta para mostrar las configuraciones de la tienda
+Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
 
+Route::get('/options', [OptionController::class, 'index'])->middleware('can:manage options')->name('options.index');
 
 Route::resource('categories', CategoryController::class)->middleware('can:manage categories');
 

@@ -30,9 +30,4 @@ class Category extends Model
         })->count();
     }
 
-    // Relación con ofertas
-    public function offers(): BelongsToMany
-    {
-        return $this->belongsToMany(Offer::class, 'offer_categories');
-    }
 }

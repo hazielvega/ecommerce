@@ -20,10 +20,6 @@ class WelcomeController extends Controller
             ->get();
         // Para configurar la zona horaria debo ir a config/app.php y cambiar la zona horaria(timezone)
 
-        // Recupero los ultimos productos
-        // $lastProducts = Product::orderBy('created_at', 'DESC')
-        //     ->take(12)
-        //     ->get();
 
         // Recupero los ultimos productos que esten activos
         $lastProducts = Product::where('is_enabled', true)

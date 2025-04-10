@@ -32,10 +32,4 @@ class Subcategory extends Model
     {
         return Product::where('subcategory_id', $this->id)->count();
     }
-
-    // Relación con ofertas
-    public function offers(): BelongsToMany
-    {
-        return $this->belongsToMany(Offer::class, 'offer_subcategories');
-    }
 }

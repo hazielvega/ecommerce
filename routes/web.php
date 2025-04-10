@@ -25,7 +25,6 @@ use Illuminate\Support\Facades\Route;
 // Ruta para la vista de bienvenida
 Route::get('/', [WelcomeController::class, 'index'])->name('welcome.index');
 
-
 // Ruta para mostrar los productos de una determinada categoria
 Route::get('/categories/{category}', [CategoryController::class, 'show'])->name('categories.show');
 
@@ -44,7 +43,7 @@ Route::get('/products/{product}', [ProductController::class, 'show'])->name('pro
 // Ruta para mostrar el carrito de compras
 Route::get('cart', [CartController::class, 'index'])->name('cart.index');
 
-// Ruta para controllar los envíos
+// Ruta para controlar los envíos
 Route::get('shipping', [ShippingController::class, 'index'])->name('shipping.index')->middleware(EnsureCartIsNotEmpty::class);
 
 // Ruta para ver lista de pedidos

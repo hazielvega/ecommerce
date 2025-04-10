@@ -9,52 +9,6 @@
         ],
         [
             // Header
-            'header' => 'Administración de la página',
-        ],
-        [
-            // Usuarios
-            'name' => 'Usuarios',
-            'icon' => 'fa-solid fa-users',
-            'route' => route('admin.users.index'),
-            'active' => request()->routeIs('admin.users.*'),
-        ],
-        [
-            // Opciones
-            'name' => 'Opciones',
-            'icon' => 'fa-solid fa-gear',
-            'route' => route('admin.options.index'),
-            'active' => request()->routeIs('admin.options.*'),
-        ],
-        [
-            // Subcategorias
-            'name' => 'Subcategorías',
-            'icon' => 'fa-solid fa-tag',
-            'route' => route('admin.subcategories.index'),
-            'active' => request()->routeIs('admin.subcategories.*'),
-        ],
-        [
-            // Categorias
-            'name' => 'Categorías',
-            'icon' => 'fa-solid fa-tags',
-            'route' => route('admin.categories.index'),
-            'active' => request()->routeIs('admin.categories.*'),
-        ],
-        [
-            // Productos
-            'name' => 'Productos',
-            'icon' => 'fa-solid fa-box',
-            'route' => route('admin.products.index'),
-            'active' => request()->routeIs('admin.products.*'),
-        ],
-        [
-            // Portadas
-            'name' => 'Portadas',
-            'icon' => 'fa-solid fa-images',
-            'route' => route('admin.covers.index'),
-            'active' => request()->routeIs('admin.covers.*'),
-        ],
-        [
-            // Header
             'header' => 'Ordenes y entregas',
         ],
         [
@@ -70,6 +24,38 @@
             'icon' => 'fa-solid fa-chart-line',
             'route' => route('admin.reports.index'),
             'active' => request()->routeIs('admin.reports.*'),
+        ],
+        [
+            // Header
+            'header' => 'Administración de la página',
+        ],
+        [
+            // Configuraciones
+            'name' => 'Configuraciones',
+            'icon' => 'fa-solid fa-gear',
+            'route' => route('admin.settings.index'),
+            'active' => request()->routeIs('admin.settings.*'),
+        ],
+        [
+            // Productos
+            'name' => 'Productos',
+            'icon' => 'fa-solid fa-box',
+            'route' => route('admin.products.index'),
+            'active' => request()->routeIs('admin.products.*'),
+        ],
+        [
+            // Usuarios
+            'name' => 'Usuarios',
+            'icon' => 'fa-solid fa-users',
+            'route' => route('admin.users.index'),
+            'active' => request()->routeIs('admin.users.*'),
+        ],
+        [
+            // Portadas
+            'name' => 'Portadas',
+            'icon' => 'fa-solid fa-images',
+            'route' => route('admin.covers.index'),
+            'active' => request()->routeIs('admin.covers.*'),
         ],
     ];
 @endphp

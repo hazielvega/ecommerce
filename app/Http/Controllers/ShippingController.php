@@ -11,32 +11,44 @@ class ShippingController extends Controller
 {
     public function index()
     {
-        // Usamos la instancia 'shopping' del carrito de compras
         Cart::instance('shopping');
 
-        // Filtramos los productos para asegurarnos de que no superen el stock disponible
+        // Filtramos los productos con stock válido
         $content = Cart::content()->filter(fn($item) => $item->qty <= $item->options['stock']);
 
-        // Calculamos el subtotal sumando los subtotales de los productos en el carrito
-        $subtotal = $content->sum(fn($item) => $item->subtotal);
+        // Calculamos subtotal y descuentos
+        $subtotal = $content->sum(fn($item) => $item->price * $item->qty);
 
-        // Definimos un precio fijo de envío (esto puede cambiar en el futuro)
-        $shipping = 10000;
+        // Calculamos el total de descuentos aplicados
+        $discount = $content->sum(function ($item) {
+            if (isset($item->options['offer'])) {
+                return ($item->options['original_price'] - $item->price) * $item->qty;
+            }
+            return 0;
+        });
 
-        // Calculamos el total a pagar
-        $total = $subtotal + $shipping;
+        $shipping = 10000; // Precio fijo de envío
 
-        // Recuperamos las direcciones dependiendo de si el usuario está autenticado o no
+        // Total con descuentos aplicados
+        $total = ($subtotal - $discount) + $shipping;
+
+        // Direcciones y destinatarios
         $addresses = auth()->check()
             ? Address::where('user_id', auth()->id())->get()
             : Address::whereNull('user_id')->where('session_id', session()->getId())->get();
 
-        // Recupero los destinatarios dependiendo de si el usuario esta autenticado o no
         $receivers = auth()->check()
             ? Receiver::where('user_id', auth()->id())->get()
             : Receiver::whereNull('user_id')->where('session_id', session()->getId())->get();
 
-        return view('shipping.index', compact('content', 'subtotal', 'shipping', 'total', 'addresses', 'receivers'));
+        return view('shipping.index', compact(
+            'content',
+            'subtotal',
+            'shipping',
+            'total',
+            'addresses',
+            'receivers',
+            'discount'
+        ));
     }
 }
-

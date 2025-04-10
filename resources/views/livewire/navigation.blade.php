@@ -1,9 +1,7 @@
 {{-- Para darle funcionalidad al boton de apertura del menu utilizo alpine con x-data --}}
-<div x-data="{
-    open: false,
-}">
+<div>
     {{-- Encabezado --}}
-    <header class="bg-[#ffffff]">
+    <header class="bg-[#fefefeeb] ">
 
         <x-container class="px-4 py-4">
             <div class="grid grid-cols-3 w-full">

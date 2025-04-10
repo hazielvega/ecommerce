@@ -1,386 +1,346 @@
-<div>
+<div class="space-y-6">
     {{-- Boton para agregar una nueva direccion --}}
     @if (!$newAddress)
-        <button class="btn btn-indigo w-full flex items-center justify-center mb-4" wire:click="$set('newAddress', true)">
-            Agregar nueva dirección <i class="fa-solid fa-plus ml-2"></i>
+        <button
+            class="w-full py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold rounded-lg shadow-md hover:from-indigo-500 hover:to-indigo-600 transition-all flex items-center justify-center mb-6"
+            wire:click="$set('newAddress', true)">
+            <i class="fas fa-plus-circle mr-2"></i>
+            Agregar nueva dirección
         </button>
     @endif
 
     {{-- Formulario para agregar una nueva direccion --}}
     @if ($newAddress)
-        <section class="bg-[#c2bf92] rounded-lg shadow overflow-hidden mb-3">
-            {{-- Encabezado --}}
-            <header class="bg-gray-600 px-4 py-2">
-                <h2 class="text-white text-lg">
+        <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-6">
+            <div class="px-6 py-4 bg-gray-700 border-b border-gray-600">
+                <h3 class="text-lg font-bold text-white flex items-center">
+                    <i class="fas fa-map-marker-alt mr-2 text-amber-400"></i>
                     Nueva dirección
-                </h2>
-            </header>
+                </h3>
+            </div>
 
-            <div class="p-4">
-                {{-- Errores de validacion --}}
+            <div class="p-6">
                 <x-validation-errors class="mb-6"></x-validation-errors>
 
-                {{-- Formulario --}}
-                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-
-                    {{-- Tipo de direccion --}}
-                    <div class="lg:col-span-1 space-y-1">
-                        <label class="font-semibold">
-                            Tipo
-                        </label>
-                        <x-select wire:model="createAddress.type">
-                            <option value="">
-                                Tipo de dirección
-                            </option>
-                            <option value="1">
-                                Domicilio
-                            </option>
-                            <option value="2">
-                                Sucursal
-                            </option>
-                        </x-select>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {{-- Tipo de dirección --}}
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-300">Tipo de dirección</label>
+                        <select wire:model="createAddress.type"
+                            class="w-full bg-gray-700 text-gray-300 rounded-lg border border-gray-600 focus:border-indigo-500 focus:ring-indigo-500">
+                            <option value="">Seleccione un tipo</option>
+                            <option value="1">Domicilio</option>
+                            <option value="2">Sucursal</option>
+                        </select>
                     </div>
 
                     {{-- Calle --}}
-                    <div class="lg:col-span-2 space-y-1">
-                        <label class="font-semibold">
-                            Calle
-                        </label>
-                        <x-input type="text" placeholder="Calle" class="w-full" wire:model="createAddress.calle" />
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-300">Calle</label>
+                        <x-input type="text" placeholder="Nombre de la calle" class="w-full"
+                            wire:model="createAddress.calle" />
                     </div>
 
-                    {{-- Numero --}}
-                    <div class="lg:col-span-1 space-y-1">
-                        <label class="font-semibold">
-                            Número
-                        </label>
+                    {{-- Número --}}
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-300">Número</label>
                         <x-input type="text" placeholder="Número" class="w-full" wire:model="createAddress.numero" />
                     </div>
 
+                    {{-- Ciudad --}}
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-300">Ciudad</label>
+                        <x-input type="text" placeholder="Ciudad" class="w-full" wire:model="createAddress.ciudad" />
+                    </div>
+
                     {{-- Provincia --}}
-                    <div class="lg:col-span-2 space-y-1">
-                        <label class="font-semibold">
-                            Provincia
-                        </label>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-300">Provincia</label>
                         <x-input type="text" placeholder="Provincia" class="w-full"
                             wire:model="createAddress.provincia" />
                     </div>
 
-                    {{-- Ciudad --}}
-                    <div class="lg:col-span-2 space-y-1">
-                        <label class="font-semibold">
-                            Ciudad
-                        </label>
-                        <x-input type="text" placeholder="Ciudad" class="w-full" wire:model="createAddress.ciudad" />
-                    </div>
-
-                    {{-- Codigo postal --}}
-                    <div class="lg:col-span-1 space-y-1">
-                        <label class="font-semibold">
-                            Código postal
-                        </label>
+                    {{-- Código Postal --}}
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-300">Código Postal</label>
                         <x-input type="text" placeholder="Código postal" class="w-full"
                             wire:model="createAddress.codigo_postal" />
                     </div>
 
-                    {{-- Descripcion de la direccion --}}
-                    <div class="lg:col-span-3 space-y-1">
-                        <label class="font-semibold">
-                            Descripción (opcional)
-                        </label>
-                        <x-input type="text" placeholder="Por ejemplo: portón blanco" class="w-full"
+                    {{-- Descripción --}}
+                    <div class="md:col-span-2 space-y-2">
+                        <label class="block text-sm font-medium text-gray-300">Referencia (opcional)</label>
+                        <x-input type="text" placeholder="Ej: Portón blanco, casa con rejas negras" class="w-full"
                             wire:model="createAddress.description" />
                     </div>
-
-                    {{-- Same address --}}
-                    {{-- <div class="col-span-4 flex items-center space-x-2">
-                        <input type="checkbox" id="sameAddress" wire:model.live="sameAddress"
-                            class="form-checkbox h-5 w-5 text-indigo-600">
-                        <label for="sameAddress" class="font-semibold">Usar esta dirección también para
-                            facturación</label>
-                    </div> --}}
-
                 </div>
 
-                {{-- Botones --}}
-                <div class="flex justify-end mt-4 space-x-2">
+                <div class="flex justify-end space-x-3 mt-6">
                     @if ($addresses->count() > 0)
-                        <x-button wire:click="$set('newAddress', false)">Cancelar</x-button>
+                        <button wire:click="$set('newAddress', false)"
+                            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors">
+                            Cancelar
+                        </button>
                     @endif
-                    <x-button wire:click="storeAddress">Guardar</x-button>
+                    <button wire:click="storeAddress"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition-colors flex items-center">
+                        <i class="fas fa-save mr-2"></i>
+                        Guardar dirección
+                    </button>
                 </div>
             </div>
-        </section>
+        </div>
     @endif
 
     {{-- Direcciones de envío --}}
-    <section class="bg-[#c2bf92] rounded-lg shadow overflow-hidden mb-3">
-        {{-- Encabezado --}}
-        <header class="bg-gray-600 px-4 py-2">
-            <h2 class="text-white text-lg">
-                Seleccione una dirección de envío
-            </h2>
-        </header>
+    <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+        <div class="px-6 py-4 bg-gray-700 border-b border-gray-600">
+            <h3 class="text-lg font-bold text-white flex items-center">
+                <i class="fas fa-truck mr-2 text-amber-400"></i>
+                Direcciones de envío disponibles
+            </h3>
+        </div>
 
-        {{-- Direcciones de envío --}}
-        <div class="p-4">
-            {{-- Lista de direcciones --}}
+        <div class="p-6">
             @if ($addresses->count() > 0)
-                {{-- Lista de direcciones --}}
-                <ul class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     @foreach ($addresses as $address)
-                        {{-- Una direccion --}}
-                        <li class="{{ $address->is_shipping ? 'bg-indigo-200' : 'bg-white' }} rounded-lg shadow"
-                            wire:key="addresses-{{ $address->id }}">
-                            <div class="p-4 flex items-center">
-                                {{-- Icono de ubicación --}}
-                                <div>
-                                    <i class="fa-solid fa-location-dot text-xl"></i>
+                        <div
+                            class="border rounded-lg overflow-hidden transition-all {{ $address->is_shipping ? 'border-amber-400 ring-2 ring-amber-400/30' : 'border-gray-600 hover:border-gray-500' }}">
+                            <div class="p-4 bg-gray-700/50">
+                                <div class="flex items-start">
+                                    <div class="mr-4 text-amber-400">
+                                        <i class="fas {{ $address->type == 1 ? 'fa-home' : 'fa-store' }} text-xl"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex justify-between items-start">
+                                            <h4 class="font-bold text-white">
+                                                {{ $address->type == 1 ? 'Domicilio' : 'Sucursal' }}
+                                            </h4>
+                                            <div class="flex space-x-2">
+                                                <button wire:click="deleteAddress({{ $address->id }})"
+                                                    class="text-gray-400 hover:text-red-400 transition-colors">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p class="text-sm text-gray-300 mt-1">{{ $address->calle }}
+                                            {{ $address->numero }}</p>
+                                        <p class="text-sm text-gray-300">{{ $address->ciudad }},
+                                            {{ $address->provincia }}</p>
+                                        <p class="text-sm text-gray-300">CP: {{ $address->codigo_postal }}</p>
+                                        @if ($address->description)
+                                            <p class="text-xs text-gray-400 mt-1">
+                                                <i class="fas fa-info-circle mr-1"></i> {{ $address->description }}
+                                            </p>
+                                        @else
+                                            <p class="text-xs text-gray-400 mt-1">
+                                                <i class="fas fa-info-circle mr-1"></i> Sin descripción
+                                            </p>
+                                        @endif
+                                    </div>
                                 </div>
-
-                                {{-- Informacion de la ubicación --}}
-                                <div class="flex-1 mx-4 text-xs">
-                                    <p class="font-bold"></p>
-                                    {{ $address->type == 1 ? 'Domicilio' : 'Sucursal' }}
-                                    </p>
-                                    <p>
-                                        {{ $address->calle . ' ' . $address->numero }}
-                                    </p>
-                                    <p>
-                                        {{ $address->ciudad . ', ' . $address->provincia }}
-                                    </p>
-                                    <p>
-                                        CP: {{ $address->codigo_postal }}
-                                    </p>
-                                </div>
-
-                                {{-- Botones de cada dirección --}}
-                                <div class="text-xs text-gray-800 flex flex-col space-y-2">
-                                    <button wire:click="setDefaultShippingAddress({{ $address->id }})">
-                                        <i class="fa-solid fa-star"></i>
-                                    </button>
-                                    {{-- <button wire:click="editAddress({{ $address->id }})">
-                                                       <i class="fa-solid fa-pen"></i>
-                                                   </button> --}}
-                                    <button wire:click="deleteAddress({{ $address->id }})">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </div>
-
+                                <button wire:click="setDefaultShippingAddress({{ $address->id }})"
+                                    class="w-full mt-3 py-1.5 text-xs font-medium rounded-lg {{ $address->is_shipping ? 'bg-amber-500/20 text-amber-400' : 'bg-gray-600 hover:bg-gray-500 text-gray-300' }} transition-colors">
+                                    {{ $address->is_shipping ? 'Seleccionada' : 'Seleccionar esta dirección' }}
+                                </button>
                             </div>
-                        </li>
+                        </div>
                     @endforeach
-                </ul>
+                </div>
             @else
-                <p class="text-center">
-                    No hay direcciones guardadas
-                </p>
+                <div class="text-center py-8">
+                    <i class="fas fa-map-marked-alt text-4xl text-gray-500 mb-3"></i>
+                    <p class="text-gray-400">No tienes direcciones guardadas</p>
+                </div>
             @endif
         </div>
-    </section>
+    </div>
+
 
     {{-- Dirección de facturación --}}
-    <section class="bg-[#c2bf92] rounded-lg shadow overflow-hidden mb-3">
-        {{-- Encabezado --}}
-        <header class="bg-gray-600 px-4 py-2">
-            <h2 class="text-white text-lg">
-                Seleccione una dirección para la facturación
-            </h2>
-        </header>
+    <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+        <div class="px-6 py-4 bg-gray-700 border-b border-gray-600">
+            <h3 class="text-lg font-bold text-white flex items-center">
+                <i class="fas fa-truck mr-2 text-amber-400"></i>
+                Direcciones de facturación disponibles
+            </h3>
+        </div>
 
-        {{-- Direcciones de envío --}}
-        <div class="p-4">
-            {{-- Lista de direcciones --}}
+        <div class="p-6">
             @if ($addresses->count() > 0)
-                {{-- Lista de direcciones --}}
-                <ul class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     @foreach ($addresses as $address)
-                        {{-- Una direccion --}}
-                        <li class="{{ $address->is_billing ? 'bg-red-200' : 'bg-white' }} rounded-lg shadow"
-                            wire:key="addresses-{{ $address->id }}">
-                            <div class="p-4 flex items-center">
-                                {{-- Icono de ubicación --}}
-                                <div>
-                                    <i class="fa-solid fa-location-dot text-xl"></i>
+                        <div
+                            class="border rounded-lg overflow-hidden transition-all {{ $address->is_billing ? 'border-amber-400 ring-2 ring-amber-400/30' : 'border-gray-600 hover:border-gray-500' }}">
+                            <div class="p-4 bg-gray-700/50">
+                                <div class="flex items-start">
+                                    <div class="mr-4 text-amber-400">
+                                        <i class="fas {{ $address->type == 1 ? 'fa-home' : 'fa-store' }} text-xl"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex justify-between items-start">
+                                            <h4 class="font-bold text-white">
+                                                {{ $address->type == 1 ? 'Domicilio' : 'Sucursal' }}
+                                            </h4>
+                                            <div class="flex space-x-2">
+                                                <button wire:click="deleteAddress({{ $address->id }})"
+                                                    class="text-gray-400 hover:text-red-400 transition-colors">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p class="text-sm text-gray-300 mt-1">{{ $address->calle }}
+                                            {{ $address->numero }}</p>
+                                        <p class="text-sm text-gray-300">{{ $address->ciudad }},
+                                            {{ $address->provincia }}</p>
+                                        <p class="text-sm text-gray-300">CP: {{ $address->codigo_postal }}</p>
+                                        @if ($address->description)
+                                            <p class="text-xs text-gray-400 mt-1">
+                                                <i class="fas fa-info-circle mr-1"></i> {{ $address->description }}
+                                            </p>
+                                        @else
+                                            <p class="text-xs text-gray-400 mt-1">
+                                                <i class="fas fa-info-circle mr-1"></i> Sin descripción
+                                            </p>
+                                        @endif
+                                    </div>
                                 </div>
-
-                                {{-- Informacion de la ubicación --}}
-                                <div class="flex-1 mx-4 text-xs">
-                                    <p class="font-bold"></p>
-                                    {{ $address->type == 1 ? 'Domicilio' : 'Sucursal' }}
-                                    </p>
-                                    <p>
-                                        {{ $address->calle . ' ' . $address->numero }}
-                                    </p>
-                                    <p>
-                                        {{ $address->ciudad . ', ' . $address->provincia }}
-                                    </p>
-                                    <p>
-                                        CP: {{ $address->codigo_postal }}
-                                    </p>
-                                </div>
-
-                                {{-- Botones de cada dirección --}}
-                                <div class="text-xs text-gray-800 flex flex-col space-y-2">
-                                    <button wire:click="setDefaultBillingAddress({{ $address->id }})">
-                                        <i class="fa-solid fa-star"></i>
-                                    </button>
-                                    {{-- <button wire:click="editAddress({{ $address->id }})">
-                                                               <i class="fa-solid fa-pen"></i>
-                                                           </button> --}}
-                                    <button wire:click="deleteAddress({{ $address->id }})">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </div>
-
+                                <button wire:click="setDefaultBillingAddress({{ $address->id }})"
+                                    class="w-full mt-3 py-1.5 text-xs font-medium rounded-lg {{ $address->is_billing ? 'bg-amber-500/20 text-amber-400' : 'bg-gray-600 hover:bg-gray-500 text-gray-300' }} transition-colors">
+                                    {{ $address->is_billing ? 'Seleccionada' : 'Seleccionar esta dirección' }}
+                                </button>
                             </div>
-                        </li>
+                        </div>
                     @endforeach
-                </ul>
+                </div>
             @else
-                <p class="text-center">
-                    No hay direcciones guardadas
-                </p>
+                <div class="text-center py-8">
+                    <i class="fas fa-map-marked-alt text-4xl text-gray-500 mb-3"></i>
+                    <p class="text-gray-400">No tienes direcciones guardadas</p>
+                </div>
             @endif
         </div>
-    </section>
+    </div>
 
-    {{-- Informacion del receptor --}}
-    <section class="bg-[#c2bf92] rounded-lg shadow overflow-hidden mb-3">
-        {{-- Encabezado --}}
-        <header class="bg-gray-600 px-4 py-2">
-            <h2 class="text-white text-lg">
+    {{-- Información del destinatario --}}
+    <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden mt-6">
+        <div class="px-6 py-4 bg-gray-700 border-b border-gray-600">
+            <h3 class="text-lg font-bold text-white flex items-center">
+                <i class="fas fa-user-tag mr-2 text-amber-400"></i>
                 Información del destinatario
-            </h2>
-        </header>
+            </h3>
+        </div>
 
-        <div class="p-4">
+        <div class="p-6">
             @if ($newReceiver)
-                {{-- Errores de validacion --}}
-                <x-validation-errors class="mb-4"></x-validation-errors>
+                <x-validation-errors class="mb-6"></x-validation-errors>
 
-                {{-- Formulario --}}
-                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-
-                    {{-- Nombre --}}
-                    <div class="lg:col-span-2 space-y-1">
-                        <label class="font-semibold">
-                            Nombre
-                        </label>
-                        <x-input type="text" placeholder="Nombre" class="w-full" wire:model="createReceiver.name" />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-300">Nombre</label>
+                        <x-input type="text" placeholder="Nombre" class="w-full"
+                            wire:model="createReceiver.name" />
                     </div>
 
-                    {{-- Apellidos --}}
-                    <div class="lg:col-span-2 space-y-1">
-                        <label class="font-semibold">
-                            Apellidos
-                        </label>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-300">Apellidos</label>
                         <x-input type="text" placeholder="Apellidos" class="w-full"
                             wire:model="createReceiver.last_name" />
                     </div>
 
-                    {{-- Documento --}}
-                    <div class="lg:col-span-2 space-y-1">
-                        <label class="font-semibold">
-                            Documento
-                        </label>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-300">Documento</label>
                         <x-input type="text" placeholder="Documento" class="w-full"
                             wire:model="createReceiver.document_number" />
                     </div>
 
-                    {{-- Telefono --}}
-                    <div class="lg:col-span-2 space-y-1">
-                        <label class="font-semibold">
-                            Telefono
-                        </label>
-                        <x-input type="text" placeholder="Telefono" class="w-full"
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-300">Teléfono</label>
+                        <x-input type="text" placeholder="Teléfono" class="w-full"
                             wire:model="createReceiver.phone" />
                     </div>
 
-                    {{-- Email --}}
-                    <div class="lg:col-span-2 space-y-1">
-                        <label class="font-semibold">
-                            Email
-                        </label>
-                        <x-input type="text" placeholder="Email" class="w-full"
+                    <div class="md:col-span-2 space-y-2">
+                        <label class="block text-sm font-medium text-gray-300">Email</label>
+                        <x-input type="email" placeholder="Email" class="w-full"
                             wire:model="createReceiver.email" />
                     </div>
                 </div>
 
-                {{-- Botones --}}
-                <div class="flex justify-end mt-4 space-x-2">
+                <div class="flex justify-end space-x-3 mt-6">
                     @if ($receivers->count() > 0)
-                        <x-button wire:click="$set('newReceiver', false)">Cancelar</x-button>
+                        <button wire:click="$set('newReceiver', false)"
+                            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors">
+                            Cancelar
+                        </button>
                     @endif
-                    <x-button wire:click="storeReceiver">Guardar</x-button>
+                    <button wire:click="storeReceiver"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition-colors flex items-center">
+                        <i class="fas fa-save mr-2"></i>
+                        Guardar destinatario
+                    </button>
                 </div>
             @else
-                {{-- Lista de receptores --}}
                 @if ($receivers->count() > 0)
-                    {{-- Lista de direcciones --}}
-                    <ul class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         @foreach ($receivers as $receiver)
-                            {{-- Una direccion --}}
-                            <li class="{{ $receiver->default ? 'bg-green-200' : 'bg-white' }} rounded-lg shadow"
-                                wire:key="receivers-{{ $receiver->id }}">
-                                <div class="p-4 flex items-center">
-                                    {{-- Icono de destinatario --}}
-                                    <div>
-                                        <i class="fa-solid fa-user"></i>
-                                    </div>
-
-                                    {{-- Informacion del receptor --}}
-                                    <div class="flex-1 mx-4 text-xs">
-                                        <p class="font-semibold">
+                            {{-- @dump($receiver) --}}
+                            <div
+                                class="border rounded-lg overflow-hidden transition-all {{ $receiver->default ? 'border-green-400 ring-2 ring-green-400/30' : 'border-gray-600 hover:border-gray-500' }}">
+                                <div class="p-4 bg-gray-700/50">
+                                    <div class="flex justify-between items-start">
+                                        <h4 class="font-bold text-white flex items-center">
+                                            <i class="fas fa-user mr-2"></i>
                                             {{ $receiver->name }} {{ $receiver->last_name }}
-                                        </p>
-                                        <p>
-                                            Documento: {{ $receiver->document }}
-                                        </p>
-                                        <p>
-                                            {{ $receiver->phone }}
-                                        </p>
-                                        <p>
-                                            {{ $receiver->email }}
-                                        </p>
+                                        </h4>
+                                        <div class="flex space-x-2">
+                                            <button wire:click="deleteReceiver({{ $receiver->id }})"
+                                                class="text-gray-400 hover:text-red-400 transition-colors">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
                                     </div>
-
-                                    {{-- Botones de cada destinatario --}}
-                                    <div class="text-xs text-gray-800 flex flex-col space-y-2">
-                                        <button wire:click="setDefaultReceiver({{ $receiver->id }})">
-                                            <i class="fa-solid fa-star"></i>
-                                        </button>
-                                        {{-- <button wire:click="editReceiver({{ $receiver->id }})">
-                                                               <i class="fa-solid fa-pen"></i>
-                                                           </button> --}}
-                                        <button wire:click="deleteReceiver({{ $receiver->id }})">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </button>
+                                    <div class="mt-2 space-y-1 text-sm text-gray-300">
+                                        <p><i class="fas fa-id-card mr-2"></i> {{ $receiver->document_number }}</p>
+                                        <p><i class="fas fa-phone mr-2"></i> {{ $receiver->phone }}</p>
+                                        <p><i class="fas fa-envelope mr-2"></i> {{ $receiver->email }}</p>
                                     </div>
-
+                                    <button wire:click="setDefaultReceiver({{ $receiver->id }})"
+                                        class="w-full mt-3 py-1.5 text-xs font-medium rounded-lg {{ $receiver->default ? 'bg-green-500/20 text-green-400' : 'bg-gray-600 hover:bg-gray-500 text-gray-300' }} transition-colors">
+                                        {{ $receiver->default ? 'Seleccionado' : 'Seleccionar este destinatario' }}
+                                    </button>
                                 </div>
-                            </li>
+                            </div>
                         @endforeach
-                    </ul>
-                @else
-                    <p class="text-center">
-                        No hay destinatarios guardados
-                    </p>
-                @endif
+                    </div>
 
-                <button class="btn btn-outline-gray w-full flex items-center justify-center mt-4"
-                    wire:click="$set('newReceiver', true)">
-                    Agregar otro destinatario <i class="fa-solid fa-plus ml-2"></i>
-                </button>
+                    <button wire:click="$set('newReceiver', true)"
+                        class="w-full mt-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center">
+                        <i class="fas fa-plus-circle mr-2"></i>
+                        Agregar otro destinatario
+                    </button>
+                @else
+                    <div class="text-center py-8">
+                        <i class="fas fa-user-slash text-4xl text-gray-500 mb-3"></i>
+                        <p class="text-gray-400 mb-4">No tienes destinatarios guardados</p>
+                        <button wire:click="$set('newReceiver', true)"
+                            class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition-colors flex items-center mx-auto">
+                            <i class="fas fa-plus-circle mr-2"></i>
+                            Agregar destinatario
+                        </button>
+                    </div>
+                @endif
             @endif
         </div>
+    </div>
 
-    </section>
-
-    {{-- Boton de comprar --}}
-    <div>
-        <button wire:click="validateBeforeCheckout" class="w-full">
-            <span class="block w-full text-center btn btn-indigo mt-4">Continuar compra</span>
+    {{-- Botón de continuar --}}
+    <div class="mt-8">
+        <button wire:click="validateBeforeCheckout"
+            class="w-full py-3 bg-gradient-to-r from-green-600 to-green-700 text-white font-bold rounded-lg shadow-lg hover:from-green-500 hover:to-green-600 transition-all flex items-center justify-center">
+            <i class="fas fa-arrow-right mr-2"></i>
+            Continuar con el pago
         </button>
     </div>
 </div>
