@@ -44,7 +44,6 @@ class Variant extends Model
             ->withTimestamps();
     }
 
-
     // Relacion con orderItems
     public function orderItems()
     {

@@ -34,7 +34,6 @@
     <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
         {{-- @livewire('navigation-menu') --}}
 
-        {{-- Llamo al componente Navigation de livewire --}}
         @livewire('navigation')
 
         <!-- Contenido de la pagina -->
@@ -60,18 +59,12 @@
     {{-- Verifica si hay un mensaje de alerta almacenado en la sesión y lo muestra usando SweetAlert --}}
     @if (session('swal'))
         <script>
-            // Si existe una alerta en la sesión ('swal'), se convierte el contenido de la sesión en un
-            // formato JSON y se utiliza con SweetAlert para mostrar la alerta.
             Swal.fire({!! json_encode(session('swal')) !!});
         </script>
     @endif
 
     <script>
-        // Escucha un evento emitido por Livewire llamado 'swal'.
-        // Cuando el evento 'swal' es disparado, se espera que contenga datos (en este caso, un array).
         Livewire.on('swal', data => {
-            // Se utiliza el primer elemento del array (data[0]) como argumento para mostrar una alerta
-            // con SweetAlert.
             Swal.fire(data[0]);
         })
     </script>

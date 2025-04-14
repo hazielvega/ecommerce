@@ -19,6 +19,7 @@ use App\Models\Product;
 use App\Models\Receiver;
 use App\Models\Variant;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Gloudemans\Shoppingcart\Facades\Cart;
 use Illuminate\Support\Facades\Route;
 
 
@@ -55,17 +56,17 @@ Route::get('/orders/{order}/download-ticket', [OrderController::class, 'download
 
 
 // MercadoPago
-Route::get('/checkoutMP', [PaymentController::class, 'createPreference'])->name('payment.checkout');
+Route::get('/checkout', [PaymentController::class, 'index'])->name('checkout.index');
+Route::post('/checkout/payment', [PaymentController::class, 'createPreference'])->name('payment.create');
 Route::get('/payment/success', [PaymentController::class, 'success'])->name('payment.success');
 Route::get('/payment/failure', [PaymentController::class, 'failure'])->name('payment.failure');
 
 
+// Niubiz
 // Rutas para realizar una compra
-Route::get('checkout', [CheckoutController::class, 'index'])->name('checkout.index')->middleware(EnsureCartIsNotEmpty::class);
-// Ruta para capturar el pago
-// al ser una ruta de tipo post, necesito pasar el token csrf. La redireccion va a estar a cargo de Niubiz,
-// por lo que no va a ser posible pasarle el token. Debo realizar una excepción en bootstrap\app.php
-Route::post('checkout/paid', [CheckoutController::class, 'paid'])->name('checkout.paid');
+// Route::get('checkout', [CheckoutController::class, 'index'])->name('checkout.index')->middleware(EnsureCartIsNotEmpty::class);
+// // Ruta para capturar el pago
+// Route::post('checkout/paid', [CheckoutController::class, 'paid'])->name('checkout.paid');
 
 Route::get('gracias', function () {
     return view('gracias');
@@ -83,14 +84,5 @@ Route::middleware([
 });
 
 Route::get('prueba', function () {
-    $order = Order::find(2);
-    //Recupero la direccion de envio de la orden creada
-    $shipping_address = Address::find($order->shipping_address_id);
-    //Recupero la direccion de facturacion de la orden creada
-    $billing_address = Address::find($order->billing_address_id);
-    // Recupero la informacion del destinatario
-    $receiver = Receiver::find($order->receiver_id);
-
-    $pdf = Pdf::loadView('orders.ticket', compact('shipping_address', 'billing_address', 'receiver', 'order'))->setPaper('a4');
-    dump($order->items);
+    return view('payment.failure');
 });

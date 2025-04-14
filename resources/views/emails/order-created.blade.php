@@ -99,12 +99,7 @@
         </div>
         <div class="email-body">
             <h1>
-                @if (auth()->check())
-                    Hola {{ auth()->user()->name }}
-                @else
-                    Hola 
-                @endif
-
+                Hola {{ $order->receiver->name }}
             </h1>
             <p>
                 Gracias por confiar en nosotros. Tu compra ha sido realizada con éxito.

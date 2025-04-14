@@ -148,6 +148,7 @@ class Product extends Model
         return $this->belongsToMany(Feature::class)->withTimestamps();
     }
 
+    // Relación muchos a muchos con Option a través de feature
     public function options()
     {
         return Option::whereHas('features', function ($query) {

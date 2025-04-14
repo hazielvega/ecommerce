@@ -53,6 +53,11 @@ class OrderTable extends DataTableComponent
                 ->label(function ($row) {
                     return view('admin.orders.actions', ['order' => $row]);
                 }),
+            // Ver
+            Column::make("Ver")
+                ->label(function ($row) {
+                    return view('admin.orders.actionShow', ['order' => $row]);
+                }),
         ];
     }
 

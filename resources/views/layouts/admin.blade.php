@@ -18,36 +18,32 @@
     {{-- FontAwesome --}}
     <script src="https://kit.fontawesome.com/7b2b373cff.js" crossorigin="anonymous"></script>
 
-    {{-- Chart.js --}}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <!-- Styles -->
     @livewireStyles
+
+    {{-- Chart.js --}}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body class="font-sans antialiased bg-gray-700" x-data="{
     sidebarOpen: false
-}" :class="{
-    'overflow-y-hidden': sidebarOpen
-}">
-    <!-- Define el cuerpo de la página con clases de fuente, antialiasing y fondo oscuro.
-         Usa Alpine.js (x-data) para manejar el estado de "sidebarOpen" (barra lateral abierta).
-         Cambia el estilo de desbordamiento cuando la barra lateral está abierta. -->
+}"
+    :class="{
+        'overflow-y-hidden': sidebarOpen
+    }">
 
     <div class="fixed inset-0 bg-gray-900 bg-opacity-50 z-20 sm:hidden" style="display: none" x-show="sidebarOpen"
         x-on:click="sidebarOpen = false">
     </div>
-    <!-- Div que muestra un fondo oscuro semitransparente cuando la barra lateral está abierta en pantallas pequeñas.
-         Está configurado para cerrar la barra lateral al hacer clic. -->
 
     @include('layouts.partials.admin.navigation')
-    <!-- Incluye la navegación desde un archivo parcial en la carpeta de layouts/admin. -->
+
 
     @include('layouts.partials.admin.sidebar')
-    <!-- Incluye la barra lateral desde un archivo parcial en la carpeta de layouts/admin. -->
+
 
     <div class="p-4 sm:ml-64">
         <div class="p-4 border border-white bg-[#0f344d] rounded-lg mt-14">

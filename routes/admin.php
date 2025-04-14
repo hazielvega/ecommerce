@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CoverController;
+use App\Http\Controllers\admin\DashboardController;
 use App\Http\Controllers\admin\OfferController;
 use App\Http\Controllers\Admin\OptionController;
 use App\Http\Controllers\Admin\ProductController;
@@ -13,9 +14,7 @@ use App\Http\Controllers\ReportController;
 use App\Livewire\Admin\Users\UserComponent;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('admin.dashboard');
-})->middleware('can:access dashboard')->name('dashboard');
+Route::get('/', [DashboardController::class, 'index'])->middleware('can:access dashboard')->name('dashboard');
 
 // Ruta para mostrar las configuraciones de la tienda
 Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
@@ -46,8 +45,9 @@ Route::put('/products/{product}/variants/{variant}', [ProductController::class, 
 // Rutas para el crud de los covers/portadas
 Route::resource('covers', CoverController::class)->middleware('can:manage covers');
 
-// Ruta para el crud de ordenes
+// Rutas para las ordenes
 Route::get('orders', [OrderController::class, 'index'])->middleware('can:manage orders')->name('orders.index');
+Route::get('orders/{order}', [OrderController::class, 'show'])->middleware('can:manage orders')->name('orders.show');
 
 // Ruta para crud de usuarios
 Route::get('users', [UserController::class, 'index'])->middleware('can:manage users')->name('users.index');
