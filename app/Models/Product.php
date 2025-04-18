@@ -18,9 +18,14 @@ class Product extends Model
         'image_path',
         'purchase_price',
         'sale_price',
+        'min_stock',
         'stock',
         'subcategory_id',
         'is_enabled',
+    ];
+
+    protected $casts = [
+        'related_products' => 'array',
     ];
 
     // Verificar si alguna variante necesita reabastecerse

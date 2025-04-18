@@ -1,4 +1,5 @@
 <div class="bg-gray-900 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    {{-- @dump(Cart::content()) --}}
     <div class="max-w-7xl mx-auto">
         <div class="grid grid-cols-1 lg:grid-cols-7 gap-6">
             {{-- Columna izquierda - Lista de productos --}}
@@ -159,7 +160,7 @@
 
                     {{-- Botón de compra --}}
                     <button wire:click="validateBeforeCheckout"
-                        class="w-full mt-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all shadow-lg flex items-center justify-center"
+                        class="w-full mt-6 py-3 bg-gradient-to-r disabled:cursor-not-allowed from-amber-500 to-amber-600 text-white font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all shadow-lg flex items-center justify-center"
                         @disabled(Cart::count() === 0)>
                         <span wire:loading.remove>Continuar con la compra</span>
                         <span wire:loading>

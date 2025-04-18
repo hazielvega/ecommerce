@@ -133,8 +133,16 @@
                                     <div class="ml-4 flex-1">
                                         <div class="flex justify-between">
                                             <h3 class="font-medium text-gray-900">{{ $item->name }}</h3>
-                                            <p class="font-medium">${{ number_format($item->price * $item->qty, 2) }}
-                                            </p>
+                                            <div class="text-right">
+                                                @if (isset($item->options['original_price']) && $item->options['original_price'] != $item->price)
+                                                    <span class="text-sm text-gray-500 line-through mr-1">
+                                                        ${{ number_format($item->options['original_price'] * $item->qty, 2) }}
+                                                    </span>
+                                                @endif
+                                                <span class="font-medium">
+                                                    ${{ number_format($item->price * $item->qty, 2) }}
+                                                </span>
+                                            </div>
                                         </div>
                                         @if ($item->options->features)
                                             <div class="mt-1 flex flex-wrap gap-1">
@@ -146,6 +154,13 @@
                                             </div>
                                         @endif
                                         <p class="mt-2 text-sm text-gray-500">Cantidad: {{ $item->qty }}</p>
+
+                                        @if (!empty($item->options['offer']))
+                                            <div class="mt-1 text-xs text-green-600">
+                                                <i class="fas fa-tag mr-1"></i>
+                                                Descuento: {{ $item->options['offer']['discount_percent'] ?? 0 }}%
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             </li>
@@ -186,6 +201,7 @@
                             Pagar ${{ number_format($total, 2) }} con Mercado Pago
                         </button>
                     </form>
+
 
                     {{-- Garantías y seguridad --}}
                     <div class="mt-6 pt-4 border-t border-gray-200">

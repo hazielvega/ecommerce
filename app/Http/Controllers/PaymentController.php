@@ -21,7 +21,6 @@ class PaymentController extends Controller
 {
     public function __construct()
     {
-        // Configura el access token al inicializar el controlador
         MercadoPagoConfig::setAccessToken(env('MP_ACCESS_TOKEN'));
     }
 
@@ -32,20 +31,10 @@ class PaymentController extends Controller
             return $item->qty <= $item->options['stock'];
         });
 
-        // dump($content);
-
-        // Calcular subtotal original (sin descuentos)
         $subtotal = $content->sum(function ($item) {
-            // Si existe precio original en las opciones, usarlo
-            if (isset($item->options['original_price'])) {
-                return $item->options['original_price'] * $item->qty;
-            }
-            // Si no existe precio original, usar el precio actual (sin descuento)
-            return $item->price * $item->qty;
+            return ($item->options['original_price'] ?? $item->price) * $item->qty;
         });
-        // dump($subtotal);
 
-        // Calcular descuentos totales
         $discount = $content->sum(function ($item) {
             if (isset($item->options['offer'])) {
                 return ($item->options['original_price'] - $item->price) * $item->qty;
@@ -56,7 +45,6 @@ class PaymentController extends Controller
         $shipping = 10000;
         $total = ($subtotal - $discount) + $shipping;
 
-        // Obtener direcciones
         $shipping_address = $this->getShippingAddress();
         $billing_address = $this->getBillingAddress();
         $receiver = $this->getReceiver();
@@ -87,23 +75,67 @@ class PaymentController extends Controller
         $shipping_address = $this->getShippingAddress();
         $billing_address = $this->getBillingAddress();
         $receiver = $this->getReceiver();
+        $shipping_price = 10000;
 
         if (!$shipping_address || !$billing_address || !$receiver) {
             return redirect()->route('checkout')->with('error', 'Completa tus datos de envío y facturación');
         }
 
-        $items = $content->map(function ($item) {
-            $itemData = [
-                'title' => $item->name,
-                'quantity' => (int) $item->qty, // Asegurar que sea entero
-                'unit_price' => (float) $item->price, // Asegurar que sea float
-                'currency_id' => 'ARS',
+        // Calcular totales
+        $subtotal = $content->sum(function ($item) {
+            return ($item->options['original_price'] ?? $item->price) * $item->qty;
+        });
+
+        $discount = $content->sum(function ($item) {
+            if (!empty($item->options['offer'])) {
+                return ($item->options['original_price'] - $item->price) * $item->qty;
+            }
+            return 0;
+        });
+
+        $total = ($subtotal - $discount) + $shipping_price;
+
+        // Crear la orden con estado Pending
+        $order = Order::create([
+            'user_id' => auth()->id(),
+            'session_id' => session()->getId(),
+            'receiver_id' => $receiver->id,
+            'shipping_address_id' => $shipping_address->id,
+            'billing_address_id' => $billing_address->id,
+            'payment_id' => 'pending_' . uniqid(), // Temporal, se actualizará después
+            'status' => OrderStatus::Pending->value,
+            'subtotal' => $subtotal,
+            'discount' => $discount,
+            'shipping_cost' => $shipping_price,
+            'total' => $total,
+        ]);
+
+        // Crear items de la orden
+        foreach ($content as $item) {
+            $orderItemData = [
+                'order_id' => $order->id,
+                'variant_id' => $item->options['variant_id'],
+                'offer_id' => $item->options['offer']['offer_id'] ?? null,
+                'quantity' => $item->qty,
+                'price' => $item->price,
+                'original_price' => $item->options['offer']['original_price'] ?? $item->price,
+                'discount_percentage' => $item->options['offer']['discount_percent'] ?? 0,
+                'subtotal' => $item->price * $item->qty,
             ];
 
-            return $itemData;
-        })->values()->toArray(); // ¡Clave! ->values() resetea los índices a numéricos
+            // dd($orderItemData);
 
-        // dump($items);
+            OrderItem::create($orderItemData);
+        }
+
+        $items = $content->map(function ($item) {
+            return [
+                'title' => $item->name,
+                'quantity' => (int) $item->qty,
+                'unit_price' => (float) $item->price,
+                'currency_id' => 'ARS',
+            ];
+        })->values()->toArray();
 
         $preferenceData = [
             'items' => $items,
@@ -115,134 +147,70 @@ class PaymentController extends Controller
                 'success' => route('payment.success'),
                 'failure' => route('payment.failure'),
             ],
-            // 'external_reference' => uniqid(),
+            'external_reference' => $order->id, // Usamos el ID de la orden como referencia
         ];
 
-        // dump($preferenceData);
         try {
             $client = new PreferenceClient();
             $preference = $client->create($preferenceData);
 
-            $order = $this->createOrder(
-                $preference->id,
-                $content,
-                $shipping_address,
-                $billing_address,
-                $receiver
-            );
+            // Actualizar la orden con el ID de la preferencia
+            $order->update(['payment_id' => $preference->id]);
+
             return redirect()->away($preference->init_point);
         } catch (MPApiException $e) {
+            // Si hay error, cambiar estado a Cancelled
+            $order->update(['status' => OrderStatus::Cancelled->value]);
+
             return back()->with('error', 'Error al procesar el pago: ' . $e->getMessage());
         }
     }
 
-    protected function createOrder($preferenceId, $cartItems, $shipping_address, $billing_address, $receiver)
-    {
-        Cart::instance('shopping');
-        $content = Cart::content()->filter(function ($item) {
-            return $item->qty <= $item->options['stock'];
-        });
-
-        // dump($content);
-
-        // Calcular subtotal original (sin descuentos)
-        $subtotal = $content->sum(function ($item) {
-            // Si existe precio original en las opciones, usarlo
-            if (isset($item->options['original_price'])) {
-                return $item->options['original_price'] * $item->qty;
-            }
-            // Si no existe precio original, usar el precio actual (sin descuento)
-            return $item->price * $item->qty;
-        });
-        // dump($subtotal);
-
-        // Calcular descuentos totales
-        $discount = $content->sum(function ($item) {
-            if (!empty($item->options['offer'])) {
-                return ($item->options['original_price'] - $item->price) * $item->qty;
-            }
-            return 0;
-        });
-
-        $shipping = 10000;
-        $total = ($subtotal - $discount) + $shipping;
-
-        $order = Order::create([
-            'user_id' => auth()->id(),
-            'session_id' => session()->getId(),
-            'receiver_id' => $receiver->id,
-            'shipping_address_id' => $shipping_address->id,
-            'billing_address_id' => $billing_address->id,
-            'payment_id' => $preferenceId,
-            'status' => OrderStatus::Pending->value, // Usamos el valor numérico del enum
-            'subtotal' => $subtotal,
-            'discount' => $discount,
-            'shipping' => $shipping,
-            'total' => $total,
-        ]);
-
-        foreach ($cartItems as $item) {
-            // Recupero la variante
-            $variant = Variant::where('id', $item->id)->first();
-            $orderItemData = [
-                'order_id' => $order->id,
-                'variant_id' => $variant->id,
-                'quantity' => $item->qty,
-                'price' => $item->price,
-                'original_price' => $$variant->sale_price,
-                'subtotal' => $item->price * $item->qty,
-            ];
-            OrderItem::create($orderItemData);
-        }
-
-        return $order;
-    }
-
-    protected function getShippingAddress()
-    {
-        return auth()->check()
-            ? Address::where('user_id', auth()->id())->where('is_shipping', true)->first()
-            : Address::where('session_id', session()->getId())->where('is_shipping', true)->first();
-    }
-
-    protected function getBillingAddress()
-    {
-        return auth()->check()
-            ? Address::where('user_id', auth()->id())->where('is_billing', true)->first()
-            : Address::where('session_id', session()->getId())->where('is_billing', true)->first();
-    }
-
-    protected function getReceiver()
-    {
-        return auth()->check()
-            ? Receiver::where('user_id', auth()->id())->where('default', true)->first()
-            : Receiver::where('session_id', session()->getId())->where('default', true)->first();
-    }
-
     public function success(Request $request)
     {
-        // Obtener el ID de preferencia de la URL
-        $preferenceId = $request->query('preference_id');
+        $orderId = $request->input('external_reference');
+        $preferenceId = $request->input('preference_id');
 
-        // Buscar la orden pendiente
-        $order = Order::where('payment_id', $preferenceId)->firstOrFail();
+        if (!$orderId) {
+            return redirect()->route('cart.show')->with('error', 'No se pudo identificar la orden');
+        }
 
-        // Actualizar estado a "approved" (asumimos que el pago fue exitoso)
-        $order->update(['status' => OrderStatus::Pending->value]);
+        $order = Order::find($orderId);
 
-        // Generar PDF y enviar email
+        if (!$order) {
+            return redirect()->route('cart.show')->with('error', 'Orden no encontrada');
+        }
+
+        // Actualizar estado de la orden a Processing
+        $order->update([
+            'status' => OrderStatus::Processing->value,
+            'payment_id' => $preferenceId ?? $order->payment_id,
+        ]);
+
+        // Actualizar stock de las variantes
+        foreach ($order->items as $item) {
+            $variant = Variant::find($item->variant_id);
+            if ($variant) {
+                $variant->decrement('stock', $item->quantity);
+            }
+        }
+
+        // Limpiar carrito
+        Cart::instance('shopping')->destroy();
+
+        // Generar documentos y enviar email
         $this->generateOrderDocuments($order);
 
-        // Vaciar carrito y redirigir a gracias
-        Cart::instance('shopping')->destroy();
         return view('gracias', compact('order'));
     }
 
     public function failure(Request $request)
     {
-        // Opcional: Marcar la orden como fallida si existe
-        if ($preferenceId = $request->query('preference_id')) {
-            Order::where('payment_id', $preferenceId)->update(['status' => OrderStatus::Failed->value]);
+        $orderId = $request->input('external_reference');
+
+        if ($orderId) {
+            Order::where('id', $orderId)
+                ->update(['status' => OrderStatus::Cancelled->value]);
         }
 
         return view('payment.failure');
@@ -264,5 +232,26 @@ class PaymentController extends Controller
         // Enviar email
         $email = auth()->check() ? auth()->user()->email : $order->receiver->email;
         Mail::to($email)->send(new OrderCreatedMail($order));
+    }
+
+    protected function getShippingAddress()
+    {
+        return auth()->check()
+            ? Address::where('user_id', auth()->id())->where('is_shipping', true)->first()
+            : Address::where('session_id', session()->getId())->where('is_shipping', true)->first();
+    }
+
+    protected function getBillingAddress()
+    {
+        return auth()->check()
+            ? Address::where('user_id', auth()->id())->where('is_billing', true)->first()
+            : Address::where('session_id', session()->getId())->where('is_billing', true)->first();
+    }
+
+    protected function getReceiver()
+    {
+        return auth()->check()
+            ? Receiver::where('user_id', auth()->id())->where('default', true)->first()
+            : Receiver::where('session_id', session()->getId())->where('default', true)->first();
     }
 }

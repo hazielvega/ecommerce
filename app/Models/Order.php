@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\OrderStatus;
+use App\Events\OrderStatusUpdated;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -19,6 +20,18 @@ class Order extends Model
         'address' => 'array',
         'status' => OrderStatus::class
     ];
+
+    protected static function booted()
+    {
+        static::updated(function ($order) {
+            if ($order->isDirty('status')) {
+                event(new OrderStatusUpdated(
+                    $order,
+                    $order->getOriginal('status')
+                ));
+            }
+        });
+    }
 
 
     // Relacion uno a muchos con user

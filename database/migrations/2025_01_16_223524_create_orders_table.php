@@ -25,7 +25,6 @@ return new class extends Migration
             $table->string('card_number');
             $table->float('total');
             $table->integer('status')->default(1);          # Por ejemplo: 1: PENDIENTE, 2: EN PROCESO, 3: COMPLETADO
-
             $table->timestamps();
         });
     }

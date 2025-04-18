@@ -19,7 +19,7 @@ class ShoppingCart extends Component
         return Cart::content()->filter(function ($item) {
             return $item->qty <= $item->options['stock'];
         })->sum(function ($item) {
-            return $item->price * $item->qty;
+            return $item->options['original_price'] * $item->qty ?? $item->price * $item->qty;
         });
     }
 
@@ -44,7 +44,7 @@ class ShoppingCart extends Component
     #[Computed()]
     public function totalWithDiscounts()
     {
-        return $this->subtotal();
+        return $this->subtotal() - $this->discountTotal();
     }
 
     #[Computed()]

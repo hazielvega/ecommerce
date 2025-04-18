@@ -14,18 +14,17 @@ class AddToCart extends Component
     public $product;
     public $variant;
     public $quantity = 1;
-    public $stock;
+    public $stock = 0;
     public $selectedFeatures = [];
 
     public function mount()
     {
         // Cargar la primera variante habilitada
-        $firstVariant = $this->product->variants()->where('is_enabled', true)->first();
+        $this->variant = $this->product->variants()->where('is_enabled', true)->first();
 
-        if ($firstVariant) {
-            $this->variant = $firstVariant;
-            $this->stock = $firstVariant->stock;
-            $this->selectedFeatures = $firstVariant->features->pluck('id', 'option_id')->toArray();
+        if ($this->variant) {
+            $this->stock = $this->variant->stock;
+            $this->selectedFeatures = $this->variant->features->pluck('id', 'option_id')->toArray();
         }
     }
 
@@ -36,10 +35,23 @@ class AddToCart extends Component
 
     public function getVariant()
     {
+        // Verificar que tengamos todas las características necesarias seleccionadas
+        $requiredOptions = $this->product->options()->pluck('id')->toArray();
+        $selectedOptions = array_keys($this->selectedFeatures);
+
+        if (count(array_diff($requiredOptions, $selectedOptions)) > 0) {
+            // Faltan características por seleccionar
+            $this->variant = null;
+            $this->stock = 0;
+            $this->quantity = 0;
+            return;
+        }
+
+        // Buscar la variante que tenga EXACTAMENTE las características seleccionadas
         $this->variant = $this->product->variants()
             ->whereHas('features', function ($query) {
                 $query->whereIn('features.id', array_values($this->selectedFeatures));
-            })
+            }, '=', count($this->selectedFeatures))
             ->where('is_enabled', true)
             ->first();
 
@@ -57,18 +69,18 @@ class AddToCart extends Component
             ]);
             return;
         }
-    
+
         Cart::instance('shopping');
         $stockDisponible = $this->variant->fresh()->stock;
-    
+
         // Verificar si el producto tiene oferta activa
         $hasOffer = $this->product->offers->isNotEmpty();
         $discountPercent = $hasOffer ? $this->product->offers->first()->discount_percentage : 0;
         $originalPrice = $this->variant->sale_price;
         $finalPrice = $originalPrice * (1 - $discountPercent / 100);
-    
+
         $cartItem = Cart::search(fn($cartItem) => $cartItem->id === $this->variant->id)->first();
-    
+
         if ($cartItem && ($cartItem->qty + $this->quantity > $stockDisponible)) {
             $this->dispatch('swal', [
                 'icon' => 'error',
@@ -77,7 +89,7 @@ class AddToCart extends Component
             ]);
             return;
         }
-    
+
         if (!$cartItem && $this->quantity > $stockDisponible) {
             $this->dispatch('swal', [
                 'icon' => 'error',
@@ -86,11 +98,11 @@ class AddToCart extends Component
             ]);
             return;
         }
-    
+
         $features = Feature::whereIn('id', $this->selectedFeatures)
             ->pluck('description', 'id')
             ->toArray();
-    
+
         // Datos de la oferta si existe
         $offerData = [];
         if ($hasOffer) {
@@ -103,33 +115,34 @@ class AddToCart extends Component
             ];
         }
 
-    
         Cart::add([
             'id' => $this->product->id,
             'name' => $this->product->name,
             'qty' => $this->quantity,
-            'price' => $finalPrice, // Usamos el precio con descuento si aplica
+            'price' => $finalPrice,
             'options' => [
-                'sku' => $this->variant->sku,
+                'variant_id' => $this->variant->id,
                 'image' => Storage::url(json_decode($this->product->image_path, true)[0] ?? 'img/noimage.png'),
                 'stock' => $this->variant->stock,
                 'features' => $features,
-                'offer' => $offerData, // Incluimos datos de la oferta
-                'original_price' => $originalPrice, // Guardamos precio original para mostrar comparación
+                'offer' => $offerData,
+                'original_price' => $originalPrice,
             ]
         ]);
-    
+
         if (auth()->check()) {
             Cart::store(auth()->id());
         }
-    
+
+        // dd(Cart::content());
+
         $this->dispatch('cartUpdated', Cart::count());
-    
+
         $message = 'El producto se agregó al carrito';
         if ($hasOffer) {
-            $message .= ' con un '.$discountPercent.'% de descuento';
+            $message .= ' con un ' . $discountPercent . '% de descuento';
         }
-    
+
         $this->dispatch('swal', [
             'icon' => 'success',
             'title' => 'Agregado',
