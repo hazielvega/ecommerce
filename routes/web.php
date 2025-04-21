@@ -86,3 +86,15 @@ Route::middleware([
 Route::get('prueba', function () {
     return view('payment.failure');
 });
+
+Route::get('/test-listener', function() {
+    $order = \App\Models\Order::first(); // Obtén una orden existente
+    $oldStatus = $order->status;
+    // $order->status = \App\Enums\OrderStatus::Shipped; // Cambia a un estado diferente
+
+    dd($oldStatus);
+    
+    // event(new \App\Events\OrderStatusUpdated($order, $oldStatus));
+    
+    // return 'Evento disparado';
+});

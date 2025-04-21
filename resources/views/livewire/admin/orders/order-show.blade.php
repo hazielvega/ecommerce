@@ -12,9 +12,44 @@
                 </p>
             </div>
             <div class="flex items-center space-x-2">
-                <span class="px-3 py-1 rounded-full text-sm font-medium {{ $statusColor($order->status->value) }}">
-                    {{ $statusName($order->status->value) }}
-                </span>
+                <x-select wire:change="updateStatus({{ $order->id }}, $event.target.value)">
+                    <option value="" disabled selected>Cambiar estado</option>
+                    {{-- Pendiente --}}
+                    <option value="{{ \App\Enums\OrderStatus::Pendiente->value }}"
+                        @selected($order->status === \App\Enums\OrderStatus::Pendiente)>
+                        Pendiente
+                    </option>
+                    {{-- Procesando --}}
+                    <option value="{{ \App\Enums\OrderStatus::Procesando->value }}"
+                        @selected($order->status === \App\Enums\OrderStatus::Procesando)>
+                        Procesando
+                    </option>
+                    {{-- Shipped --}}
+                    <option value="{{ \App\Enums\OrderStatus::Enviado->value }}"
+                        @selected($order->status === \App\Enums\OrderStatus::Enviado)>
+                        Enviado
+                    </option>
+                    {{-- Completed --}}
+                    <option value="{{ \App\Enums\OrderStatus::Completado->value }}"
+                        @selected($order->status === \App\Enums\OrderStatus::Completado)>
+                        Completado
+                    </option>
+                    {{-- Failed --}}
+                    <option value="{{ \App\Enums\OrderStatus::Fallido->value }}"
+                        @selected($order->status === \App\Enums\OrderStatus::Fallido)>
+                        Fallido
+                    </option>
+                    {{-- Refunded --}}
+                    <option value="{{ \App\Enums\OrderStatus::Reembolsado->value }}"
+                        @selected($order->status === \App\Enums\OrderStatus::Reembolsado)>
+                        Reembolsado
+                    </option>
+                    {{-- Cancelled --}}
+                    <option value="{{ \App\Enums\OrderStatus::Cancelado->value }}"
+                        @selected($order->status === \App\Enums\OrderStatus::Cancelado)>
+                        Cancelado
+                    </option>
+                </x-select>
             </div>
         </div>
     </section>
@@ -31,17 +66,22 @@
             <div class="space-y-3">
                 <div>
                     <p class="text-sm text-gray-400">Nombre</p>
-                    <p class="text-white">{{ $order->user->name ?? 'Cliente eliminado' }}</p>
+                    <p class="text-white">{{ $order->user->name ?? 'Cliente sin registro' }}</p>
                 </div>
 
                 <div>
                     <p class="text-sm text-gray-400">Email</p>
-                    <p class="text-white">{{ $order->user->email ?? 'N/A' }}</p>
+                    <p class="text-white">{{ $order->user->email ?? $order->receiver->email }}</p>
                 </div>
 
                 <div>
                     <p class="text-sm text-gray-400">Teléfono</p>
-                    <p class="text-white">{{ $order->user->phone ?? 'N/A' }}</p>
+                    <p class="text-white">{{ $order->user->phone ?? $order->receiver->phone }}</p>
+                </div>
+
+                <div>
+                    <p class="text-sm text-gray-400">Documento</p>
+                    <p class="text-white">{{ $order->user->document_number ?? $order->receiver->document_number }}</p>
                 </div>
             </div>
         </section>
@@ -198,46 +238,6 @@
         </div>
     </section>
 
-    <!-- Cambio de Estado -->
-    <section class="rounded-lg bg-gray-900 shadow-lg border border-gray-700 p-6">
-        <h2 class="text-lg font-semibold text-white border-b border-gray-700 pb-3 mb-4">
-            <i class="fas fa-exchange-alt mr-2"></i>
-            Gestión de Estado
-        </h2>
-
-        <form wire:submit.prevent="updateStatus">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="md:col-span-1">
-                    <x-label class="text-gray-300 mb-1" value="Nuevo Estado" />
-                    <x-select wire:model="newStatus" class="w-full">
-                        <option value="" disabled selected>Seleccionar estado...</option>
-                        @foreach ($statuses as $status)
-                            <option value="{{ $status->value }}" @if ($order->status === $status->value) selected @endif>
-                                {{ $statusName($status->value) }}
-                                <!-- Cambiado de OrderHelper::statusName() a $statusName() -->
-                            </option>
-                        @endforeach
-                    </x-select>
-                    <x-input-error for="newStatus" class="mt-1" />
-                </div>
-
-                <div class="md:col-span-2">
-                    <x-label class="text-gray-300 mb-1" value="Notas (Opcional)" />
-                    <textarea wire:model="statusNote" rows="2"
-                        class="w-full bg-gray-700 border-gray-600 text-white rounded-lg focus:ring-purple-500 focus:border-purple-500"
-                        placeholder="Agregar notas sobre el cambio de estado..."></textarea>
-                    <x-input-error for="statusNote" class="mt-1" />
-                </div>
-            </div>
-
-            <div class="flex justify-end mt-4">
-                <x-button wire:click="updateStatus" wire:loading.attr="disabled" wire:loading.class="opacity-50">
-                    <span wire:loading.remove>Actualizar Estado</span>
-                    <span wire:loading>Procesando...</span>
-                </x-button>
-            </div>
-        </form>
-    </section>
 
     <!-- Historial de Estados -->
     <section class="rounded-lg bg-gray-900 shadow-lg border border-gray-700 p-6">

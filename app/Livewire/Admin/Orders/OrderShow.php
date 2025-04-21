@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Orders;
 use Livewire\Component;
 use App\Models\Order;
 use App\Enums\OrderStatus;
+use App\Events\OrderStatusUpdated;
 use Illuminate\Support\Facades\DB;
 
 class OrderShow extends Component
@@ -12,8 +13,6 @@ class OrderShow extends Component
     public Order $order;
     public $newStatus;
     public $statusNote;
-
-    // protected $listeners = ['statusUpdated' => '$refresh'];
 
     public function mount(Order $order)
     {
@@ -27,63 +26,64 @@ class OrderShow extends Component
         ]);
     }
 
-    public function updateStatus()
+    public function updateStatus($orderId, $newStatus)
     {
-        $this->validate([
-            'newStatus' => 'required|integer|in:' . implode(',', OrderStatus::getValues()),
-            'statusNote' => 'nullable|string|max:500',
-        ]);
+        $order = Order::findOrFail($orderId);
+        $previousStatus = $order->status;
 
-        DB::transaction(function () {
-            $previousStatus = $this->order->status;
-
-            $this->order->update([
-                'status' => $this->newStatus,
+        // Validar que el nuevo estado sea diferente
+        if ($previousStatus->value == $newStatus) {
+            $this->dispatch('swal', [
+                'icon' => 'error',
+                'title' => 'Error',
+                'text' => 'No puedes seleccionar el mismo estado actual.',
             ]);
+            return;
+        }
 
-            // Registrar el cambio de estado en el historial
-            $this->order->statusHistory()->create([
-                'from_status' => $previousStatus,
-                'to_status' => $this->newStatus,
-                'notes' => $this->statusNote,
-                'changed_by' => auth()->id(),
-            ]);
+        DB::transaction(function () use ($order, $newStatus, $previousStatus) {
+            $order->update(['status' => $newStatus]);
+
+            // Disparar evento con ambos estados
+            event(new \App\Events\OrderStatusUpdated(
+                $order,
+                $previousStatus->value, // Enviar el valor numérico
+                $newStatus
+            ));
 
             $this->dispatch('swal', [
                 'icon' => 'success',
                 'title' => 'Actualizado',
                 'text' => 'El estado de la orden fue actualizado correctamente.',
             ]);
-
-            $this->reset(['newStatus', 'statusNote']);
         });
-    }
-
-    protected function statusName($status): string
-    {
-        return match ($status) {
-            OrderStatus::Pending->value => 'Pendiente',
-            OrderStatus::Processing->value => 'Procesando',
-            OrderStatus::Shipped->value => 'Enviado',
-            OrderStatus::Failed->value => 'Fallido',
-            OrderStatus::Completed->value => 'Completado',
-            OrderStatus::Cancelled->value => 'Cancelado',
-            OrderStatus::Refunded->value => 'Reembolsado',
-            default => 'Desconocido'
-        };
     }
 
     protected function statusColor($status): string
     {
         return match ($status) {
-            OrderStatus::Pending->value => 'bg-yellow-500/20 text-yellow-500',
-            OrderStatus::Processing->value => 'bg-blue-500/20 text-blue-500',
-            OrderStatus::Shipped->value => 'bg-indigo-500/20 text-indigo-500',
-            OrderStatus::Failed->value => 'bg-red-500/20 text-red-500',
-            OrderStatus::Completed->value => 'bg-green-500/20 text-green-500',
-            OrderStatus::Cancelled->value => 'bg-red-500/20 text-red-500',
-            OrderStatus::Refunded->value => 'bg-gray-500/20 text-gray-500',
+            OrderStatus::Pendiente->value => 'bg-yellow-500/20 text-yellow-500',
+            OrderStatus::Procesando->value => 'bg-blue-500/20 text-blue-500',
+            OrderStatus::Enviado->value => 'bg-indigo-500/20 text-indigo-500',
+            OrderStatus::Fallido->value => 'bg-red-500/20 text-red-500',
+            OrderStatus::Completado->value => 'bg-green-500/20 text-green-500',
+            OrderStatus::Cancelado->value => 'bg-red-500/20 text-red-500',
+            OrderStatus::Reembolsado->value => 'bg-gray-500/20 text-gray-500',
             default => 'bg-gray-500/20 text-gray-500'
+        };
+    }
+
+    protected function statusName($status): string
+    {
+        return match ($status) {
+            OrderStatus::Pendiente->value => 'Pendiente',
+            OrderStatus::Procesando->value => 'Procesando',
+            OrderStatus::Enviado->value => 'Enviado',
+            OrderStatus::Fallido->value => 'Fallido',
+            OrderStatus::Completado->value => 'Completado',
+            OrderStatus::Cancelado->value => 'Cancelado',
+            OrderStatus::Reembolsado->value => 'Reembolsado',
+            default => 'Desconocido'
         };
     }
 

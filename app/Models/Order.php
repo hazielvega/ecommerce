@@ -17,11 +17,17 @@ class Order extends Model
 
     protected $fillable = [
         'user_id',
-        'status',
-        'content',
-        'address',
-        'status',
+        'session_id',
         'receiver_id',
+        'shipping_address_id',
+        'billing_address_id',
+        'billing_document',
+        'pdf_path',
+        'payment_method',
+        'payment_id',
+        'total',
+        'shipping_cost',
+        'status',
     ];
 
     protected $casts = [
@@ -29,19 +35,6 @@ class Order extends Model
         'address' => 'array',
         'status' => OrderStatus::class
     ];
-
-    protected static function booted()
-    {
-        static::updated(function ($order) {
-            if ($order->isDirty('status')) {
-                event(new OrderStatusUpdated(
-                    $order,
-                    $order->getOriginal('status')
-                ));
-            }
-        });
-    }
-
 
     // Relacion uno a muchos con user
     public function user()

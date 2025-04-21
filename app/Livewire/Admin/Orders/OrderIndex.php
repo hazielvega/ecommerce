@@ -7,6 +7,7 @@ use Livewire\WithPagination;
 use App\Models\Order;
 use App\Enums\OrderStatus;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class OrderIndex extends Component
 {
@@ -73,13 +74,13 @@ class OrderIndex extends Component
     {
         return [
             'all' => 'Todos',
-            OrderStatus::Pending->value => 'Pendiente',
-            OrderStatus::Processing->value => 'Procesando',
-            OrderStatus::Shipped->value => 'Enviado',
-            OrderStatus::Completed->value => 'Completado',
-            OrderStatus::Failed->value => 'Fallido',
-            OrderStatus::Refunded->value => 'Reembolsado',
-            OrderStatus::Cancelled->value => 'Cancelado',
+            OrderStatus::Pendiente->value => 'Pendiente',
+            OrderStatus::Procesando->value => 'Procesando',
+            OrderStatus::Enviado->value => 'Enviado',
+            OrderStatus::Completado->value => 'Completado',
+            OrderStatus::Fallido->value => 'Fallido',
+            OrderStatus::Reembolsado->value => 'Reembolsado',
+            OrderStatus::Cancelado->value => 'Cancelado',
         ];
     }
 
@@ -105,6 +106,12 @@ class OrderIndex extends Component
             'title' => 'Actualizado',
             'text' => 'El estado de la orden fue actualizado correctamente.',
         ]);
+    }
+
+    // Metodo para descargar el ticket
+    public function downloadTicket(Order $order)
+    {
+        return Storage::download($order->pdf_path);
     }
 
     public function render()
@@ -145,8 +152,8 @@ class OrderIndex extends Component
             'statuses' => $this->getOrderStatuses(),
             'paymentMethods' => $this->getPaymentMethods(),
             'totalOrders' => Order::count(),
-            'pendingOrders' => Order::where('status', OrderStatus::Pending->value)->count(),
-            'completedOrders' => Order::where('status', OrderStatus::Completed->value)->count(),
+            'pendingOrders' => Order::where('status', OrderStatus::Pendiente->value)->count(),
+            'completedOrders' => Order::where('status', OrderStatus::Completado->value)->count(),
         ]);
     }
 }

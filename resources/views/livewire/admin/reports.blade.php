@@ -172,6 +172,90 @@
                 </div>
             </div>
         </div>
+
+        {{-- Tercera fila de gráficos --}}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Gráfico de desempeño de ofertas (NUEVO) -->
+            <div class="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
+                <h2 class="text-xl font-semibold text-white mb-4 flex items-center">
+                    <i class="fas fa-tags mr-2 text-purple-400"></i> Desempeño de Ofertas
+                </h2>
+
+                <div wire:loading.class="block" wire:loading.class.remove="hidden" class="hidden text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-purple-400 text-2xl"></i>
+                    <p class="text-gray-300 mt-2">Cargando datos...</p>
+                </div>
+
+                <div wire:loading.class="hidden" class="transition-opacity duration-300">
+                    @if (isset($offersPerformanceData) && count($offersPerformanceData) > 0)
+                        <div wire:ignore>
+                            <canvas id="offersPerformanceChart" height="300"></canvas>
+                        </div>
+                        <div class="mt-4 text-sm text-gray-300">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="font-medium text-purple-300">Oferta más popular:</p>
+                                    <p>{{ $offersPerformanceData[0]['name'] }}
+                                        ({{ $offersPerformanceData[0]['total_items_sold'] }} productos)</p>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-purple-300">Mayor descuento:</p>
+                                    <p>{{ collect($offersPerformanceData)->sortByDesc('discount_percentage')->first()['name'] }}
+                                        ({{ collect($offersPerformanceData)->sortByDesc('discount_percentage')->first()['discount_percentage'] }}%)
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        <div class="text-center py-8 text-gray-400">
+                            No hay datos de ofertas disponibles con los filtros seleccionados
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Gráfico de ofertas por categoría -->
+            <div class="bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-700">
+                <h2 class="text-xl font-semibold text-white mb-4 flex items-center">
+                    <i class="fas fa-project-diagram mr-2 text-amber-400"></i> Distribución de Ofertas por Categoría
+                </h2>
+
+                <div wire:loading.class="block" wire:loading.class.remove="hidden" class="hidden text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-amber-400 text-2xl"></i>
+                    <p class="text-gray-300 mt-2">Cargando datos...</p>
+                </div>
+
+                <div wire:loading.class="hidden" class="transition-opacity duration-300">
+                    @if (isset($offersByCategoryData) && count($offersByCategoryData) > 0)
+                        <div wire:ignore>
+                            <canvas id="offersByCategoryChart" height="350"></canvas>
+                        </div>
+                        <div class="mt-4 text-sm text-gray-300 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <p class="font-medium text-amber-300">Categoría más ofertada:</p>
+                                <p>{{ $mostDiscountedCategory['category_name'] }}
+                                    ({{ $mostDiscountedCategory['offers_count'] }} ofertas)</p>
+                            </div>
+                            <div>
+                                <p class="font-medium text-amber-300">Mayor descuento promedio:</p>
+                                <p>{{ $highestAvgDiscount['category_name'] }}
+                                    ({{ number_format($highestAvgDiscount['avg_discount'], 2) }}%)</p>
+                            </div>
+                            <div>
+                                <p class="font-medium text-amber-300">Productos más beneficiados:</p>
+                                <p>{{ $mostDiscountedProductsCategory['category_name'] }}
+                                    ({{ $mostDiscountedProductsCategory['products_count'] }} productos)</p>
+                            </div>
+                        </div>
+                    @else
+                        <div class="text-center py-8 text-gray-400">
+                            No hay datos de distribución por categoría
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -305,24 +389,30 @@
 
                 if (newUsersChart) newUsersChart.destroy();
 
-                const dates = data.map(item => item.date);
-                const counts = data.map(item => item.count);
+                // Formatear fechas para mejor visualización
+                const formattedDates = data.map(item => {
+                    const date = new Date(item.date);
+                    return date.toLocaleDateString('es-ES', {
+                        day: 'numeric',
+                        month: 'short'
+                    });
+                });
 
                 newUsersChart = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: dates,
+                        labels: formattedDates,
                         datasets: [{
                             label: 'Nuevos Usuarios',
-                            data: counts,
+                            data: data.map(item => item.count),
                             backgroundColor: 'rgba(139, 92, 246, 0.2)',
                             borderColor: 'rgba(139, 92, 246, 1)',
                             borderWidth: 2,
-                            tension: 0.3,
+                            tension: 0.1, // Menos curvatura para mejor lectura
                             fill: true,
                             pointBackgroundColor: 'rgba(139, 92, 246, 1)',
-                            pointRadius: 4,
-                            pointHoverRadius: 6
+                            pointRadius: 3,
+                            pointHoverRadius: 5
                         }]
                     },
                     options: {
@@ -330,15 +420,21 @@
                         maintainAspectRatio: false,
                         plugins: {
                             legend: {
-                                position: 'top',
-                                labels: {
-                                    color: '#fff'
-                                }
+                                display: false // Ocultamos la leyenda ya que solo hay un dataset
                             },
                             tooltip: {
-                                enabled: true,
-                                mode: 'index',
-                                intersect: false
+                                callbacks: {
+                                    title: function(context) {
+                                        // Mostrar fecha completa en tooltip
+                                        const date = new Date(data[context[0].dataIndex].date);
+                                        return date.toLocaleDateString('es-ES', {
+                                            weekday: 'long',
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric'
+                                        });
+                                    }
+                                }
                             }
                         },
                         scales: {
@@ -354,10 +450,195 @@
                             },
                             x: {
                                 ticks: {
+                                    color: '#fff',
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                },
+                                grid: {
+                                    display: false // Menos líneas para mejor legibilidad
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function initOffersByCategoryChart(data) {
+                const ctx = document.getElementById('offersByCategoryChart').getContext('2d');
+
+                // Preparar datos para gráfico apilado
+                const categories = data.map(item => item.category_name);
+                const offersCount = data.map(item => item.offers_count);
+                const productsCount = data.map(item => item.products_count);
+                const avgDiscounts = data.map(item => item.avg_discount);
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: categories,
+                        datasets: [{
+                                label: 'N° de Ofertas',
+                                data: offersCount,
+                                backgroundColor: 'rgba(245, 158, 11, 0.7)',
+                                borderColor: 'rgba(245, 158, 11, 1)',
+                                borderWidth: 1,
+                                yAxisID: 'y'
+                            },
+                            {
+                                label: 'Productos incluidos',
+                                data: productsCount,
+                                backgroundColor: 'rgba(217, 119, 6, 0.7)',
+                                borderColor: 'rgba(217, 119, 6, 1)',
+                                borderWidth: 1,
+                                yAxisID: 'y'
+                            },
+                            {
+                                type: 'line',
+                                label: 'Descuento promedio %',
+                                data: avgDiscounts,
+                                borderColor: 'rgba(251, 191, 36, 1)',
+                                borderWidth: 3,
+                                pointBackgroundColor: 'rgba(251, 191, 36, 1)',
+                                pointRadius: 5,
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Distribución de Ofertas por Categoría',
+                                color: '#fff'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    afterBody: function(context) {
+                                        const category = data[context[0].dataIndex];
+                                        return [
+                                            `Productos vendidos: ${category.total_items_sold || 0}`,
+                                            `Descuento promedio: ${category.avg_discount.toFixed(2)}%`
+                                        ];
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                stacked: true,
+                                title: {
+                                    display: true,
+                                    text: 'Cantidad',
+                                    color: '#fff'
+                                },
+                                ticks: {
                                     color: '#fff'
                                 },
                                 grid: {
                                     color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            y1: {
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: '% Descuento',
+                                    color: '#fff'
+                                },
+                                min: 0,
+                                max: 100,
+                                ticks: {
+                                    color: '#fff'
+                                },
+                                grid: {
+                                    drawOnChartArea: false
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: '#fff'
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+
+            function initOffersPerformanceChart(data) {
+                const ctx = document.getElementById('offersPerformanceChart').getContext('2d');
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(item => item.name),
+                        datasets: [{
+                                type: 'bar',
+                                label: 'Productos vendidos',
+                                data: data.map(item => item.total_items_sold),
+                                backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                                borderColor: 'rgba(59, 130, 246, 1)',
+                                borderWidth: 1,
+                                yAxisID: 'y'
+                            },
+                            {
+                                type: 'line',
+                                label: 'Descuento promedio',
+                                data: data.map(item => item.avg_discount),
+                                backgroundColor: 'rgba(220, 38, 38, 0.2)',
+                                borderColor: 'rgba(220, 38, 38, 1)',
+                                borderWidth: 2,
+                                tension: 0.1,
+                                fill: false,
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Desempeño de Ofertas'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    afterBody: function(context) {
+                                        const offer = data[context[0].dataIndex];
+                                        return [
+                                            `Total vendido: $${offer.total_revenue.toFixed(2)}`,
+                                            `Productos: ${offer.total_items_sold}`
+                                        ];
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: {
+                                    display: true,
+                                    text: 'Productos vendidos'
+                                }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: '% Descuento'
+                                },
+                                min: 0,
+                                max: 100,
+                                grid: {
+                                    drawOnChartArea: false
                                 }
                             }
                         }
@@ -422,12 +703,20 @@
             Livewire.on('newUsersChartUpdated', ({
                 data
             }) => initNewUsersChart(data));
+            Livewire.on('offersChartUpdated', ({
+                data
+            }) => initOffersPerformanceChart(data));
+            Livewire.on('offersByCategoryChartUpdated', ({
+                data
+            }) => initOffersByCategoryChart(data));
 
             // Inicializar gráficos con datos iniciales
             initProductsChart(@json($topProductsData));
             initSubcategoriesChart(@json($topSubcategoriesData));
             initCategoriesSalesChart(@json($categoriesSalesData));
             initNewUsersChart(@json($newUsersData));
+            initOffersPerformanceChart(@json($offersPerformanceData));
+            initOffersByCategoryChart(@json($offersByCategoryData));
         });
     </script>
 @endpush

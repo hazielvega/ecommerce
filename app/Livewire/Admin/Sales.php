@@ -58,7 +58,7 @@ class Sales extends Component
         ])
             ->whereHas('order', function ($q) {
                 // Solo órdenes completadas
-                $q->where('status', OrderStatus::Completed->value);
+                $q->where('status', OrderStatus::Completado->value);
 
                 // Filtro por fechas
                 $q->when($this->date_from, function ($q) {

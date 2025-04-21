@@ -4,13 +4,13 @@ namespace App\Enums;
 
 enum OrderStatus: int
 {
-    case Pending = 1;
-    case Processing = 2;
-    case Shipped = 3;
-    case Completed = 4;
-    case Failed = 5;
-    case Refunded = 6;
-    case Cancelled = 7;
+    case Pendiente = 1;
+    case Procesando = 2;
+    case Enviado = 3;
+    case Completado = 4;
+    case Fallido = 5;
+    case Reembolsado = 6;
+    case Cancelado = 7;
 
     public static function getValues(): array
     {

@@ -11,13 +11,13 @@ class OrderStatusUpdated
     use Dispatchable, SerializesModels;
 
     public $order;
-    public $oldStatus;
-    public $newStatus;
+    public $oldStatus; // Valor numérico
+    public $newStatus; // Valor numérico
 
-    public function __construct(Order $order, $oldStatus)
+    public function __construct(Order $order, $oldStatus, $newStatus)
     {
         $this->order = $order;
-        $this->oldStatus = is_int($oldStatus) ? \App\Enums\OrderStatus::from($oldStatus) : $oldStatus;
-        $this->newStatus = $order->status;
+        $this->oldStatus = $oldStatus;
+        $this->newStatus = $newStatus;
     }
 }

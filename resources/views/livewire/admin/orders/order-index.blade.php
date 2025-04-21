@@ -161,7 +161,7 @@
                             </div>
                         </th>
                         <th scope="col"
-                            class="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
+                            class="px-6 py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
                             Detalles
                         </th>
                     </tr>
@@ -174,8 +174,9 @@
                             </td> --}}
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-white">
-                                    {{ $order->user->name ?? 'Cliente eliminado' }}</div>
-                                <div class="text-sm text-gray-400">{{ $order->user->email ?? 'N/A' }}</div>
+                                    {{ $order->user->name ?? 'Cliente sin registro' }}</div>
+                                <div class="text-sm text-gray-400">{{ $order->user->email ?? $order->receiver->email }}
+                                </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-white">
                                 ${{ number_format($order->total + $order->shipping_cost, 2) }}
@@ -187,38 +188,38 @@
                                 <x-select wire:change="updateStatus({{ $order->id }}, $event.target.value)">
                                     <option value="" disabled selected>Cambiar estado</option>
                                     {{-- Pendiente --}}
-                                    <option value="{{ \App\Enums\OrderStatus::Pending->value }}"
-                                        @selected($order->status === \App\Enums\OrderStatus::Pending)>
+                                    <option value="{{ \App\Enums\OrderStatus::Pendiente->value }}"
+                                        @selected($order->status === \App\Enums\OrderStatus::Pendiente)>
                                         Pendiente
                                     </option>
                                     {{-- Procesando --}}
-                                    <option value="{{ \App\Enums\OrderStatus::Processing->value }}"
-                                        @selected($order->status === \App\Enums\OrderStatus::Processing)>
+                                    <option value="{{ \App\Enums\OrderStatus::Procesando->value }}"
+                                        @selected($order->status === \App\Enums\OrderStatus::Procesando)>
                                         Procesando
                                     </option>
                                     {{-- Shipped --}}
-                                    <option value="{{ \App\Enums\OrderStatus::Shipped->value }}"
-                                        @selected($order->status === \App\Enums\OrderStatus::Shipped)>
+                                    <option value="{{ \App\Enums\OrderStatus::Enviado->value }}"
+                                        @selected($order->status === \App\Enums\OrderStatus::Enviado)>
                                         Enviado
                                     </option>
                                     {{-- Completed --}}
-                                    <option value="{{ \App\Enums\OrderStatus::Completed->value }}"
-                                        @selected($order->status === \App\Enums\OrderStatus::Completed)>
+                                    <option value="{{ \App\Enums\OrderStatus::Completado->value }}"
+                                        @selected($order->status === \App\Enums\OrderStatus::Completado)>
                                         Completado
                                     </option>
                                     {{-- Failed --}}
-                                    <option value="{{ \App\Enums\OrderStatus::Failed->value }}"
-                                        @selected($order->status === \App\Enums\OrderStatus::Failed)>
+                                    <option value="{{ \App\Enums\OrderStatus::Fallido->value }}"
+                                        @selected($order->status === \App\Enums\OrderStatus::Fallido)>
                                         Fallido
                                     </option>
                                     {{-- Refunded --}}
-                                    <option value="{{ \App\Enums\OrderStatus::Refunded->value }}"
-                                        @selected($order->status === \App\Enums\OrderStatus::Refunded)>
+                                    <option value="{{ \App\Enums\OrderStatus::Reembolsado->value }}"
+                                        @selected($order->status === \App\Enums\OrderStatus::Reembolsado)>
                                         Reembolsado
                                     </option>
                                     {{-- Cancelled --}}
-                                    <option value="{{ \App\Enums\OrderStatus::Cancelled->value }}"
-                                        @selected($order->status === \App\Enums\OrderStatus::Cancelled)>
+                                    <option value="{{ \App\Enums\OrderStatus::Cancelado->value }}"
+                                        @selected($order->status === \App\Enums\OrderStatus::Cancelado)>
                                         Cancelado
                                     </option>
                                 </x-select>
@@ -227,17 +228,18 @@
                                 {{ $order->created_at->format('d/m/Y H:i') }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div class="flex justify-end space-x-2">
+                                <div class="flex justify-end items-center space-x-2">
+                                    <div>
+                                        <x-button wire:click="downloadTicket({{ $order->id }})">
+                                            <i class="fas fa-file-pdf"></i> PDF
+                                        </x-button>
+                                    </div>
+
                                     <a href="{{ route('admin.orders.show', $order->id) }}">
                                         <x-button class="bg-blue-600 hover:bg-blue-500 px-3 py-1 text-xs">
                                             <i class="fas fa-eye"></i>
                                         </x-button>
                                     </a>
-                                    {{-- <a href="{{ route('admin.orders.edit', $order->id) }}">
-                                        <x-button class="bg-gray-700 hover:bg-gray-600 px-3 py-1 text-xs">
-                                            <i class="fas fa-edit"></i>
-                                        </x-button>
-                                    </a> --}}
                                 </div>
                             </td>
                         </tr>

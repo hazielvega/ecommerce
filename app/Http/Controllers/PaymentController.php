@@ -95,6 +95,8 @@ class PaymentController extends Controller
 
         $total = ($subtotal - $discount) + $shipping_price;
 
+        // dd($total);
+
         // Crear la orden con estado Pending
         $order = Order::create([
             'user_id' => auth()->id(),
@@ -102,12 +104,10 @@ class PaymentController extends Controller
             'receiver_id' => $receiver->id,
             'shipping_address_id' => $shipping_address->id,
             'billing_address_id' => $billing_address->id,
-            'payment_id' => 'pending_' . uniqid(), // Temporal, se actualizará después
-            'status' => OrderStatus::Pending->value,
-            'subtotal' => $subtotal,
-            'discount' => $discount,
-            'shipping_cost' => $shipping_price,
+            'payment_id' => null, // Temporal, se actualizará después
             'total' => $total,
+            'status' => OrderStatus::Pending->value,
+            'shipping_cost' => $shipping_price,
         ]);
 
         // Crear items de la orden
