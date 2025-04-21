@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use DragonCode\Contracts\Http\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -22,6 +23,7 @@ class Product extends Model
         'stock',
         'subcategory_id',
         'is_enabled',
+        'related_products',
     ];
 
     protected $casts = [
@@ -34,6 +36,11 @@ class Product extends Model
         return $this->variants->some(function ($variant) {
             return $variant->isOutOfStock();
         });
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_enabled', '=', '1'); 
     }
 
     public function scopeInOffers($query, $offerIds)

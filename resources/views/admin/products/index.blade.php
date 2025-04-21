@@ -16,18 +16,14 @@
     </x-slot>
 
     <div class="mb-6 card">
-        <h1 class="text-lg font-semibold text-white mb-3">Productos</h1>
-        @livewire('admin.products.product-table')
+        @livewire('admin.products.product-index')
     </div>
-
+    
     <div class="mb-6 card">
-        <h1 class="text-lg font-semibold text-white mb-3">Ofertas</h1>
-        @livewire('admin.offers.offer-table')
+        @livewire('admin.offers.offer-index')
     </div>
 
-    <div class="mb-6">
-        @livewire('admin.offers.offer-create')
-    </div>
+
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {{-- Configuracion de precios --}}

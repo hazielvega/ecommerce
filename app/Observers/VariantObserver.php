@@ -16,6 +16,8 @@ class VariantObserver
         $variant->sale_price = $variant->product->sale_price;
         // Asigno el stock
         $variant->stock = 20;
+        // Asigno el stock minimo
+        $variant->min_stock = $variant->product->min_stock;
         // Guardo el cambio
         $variant->save();
     }

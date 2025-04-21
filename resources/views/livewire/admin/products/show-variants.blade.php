@@ -1,9 +1,11 @@
 <div>
     {{-- Boton para abrir el modal --}}
     <div class="">
-        <x-button wire:click="$set('open', true)">
-            Variantes
-        </x-button>
+        <button wire:click="$set('open', true)">
+            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-900 text-purple-300">
+                {{ $product->variants()->count() }} variantes
+            </span>
+        </button>
 
         @if ($product->isOutOfStock())
             <span class="ml-2 bg-white text-red-600 font-bold px-2 py-1 rounded-full text-xs">

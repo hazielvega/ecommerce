@@ -3,94 +3,68 @@
 namespace App\Livewire\Admin\Products;
 
 use App\Models\Feature;
-use App\Models\FeatureProduct;
-use App\Models\Option;
 use App\Models\Variant;
-use Illuminate\Support\Facades\DB;
-use Livewire\Attributes\Computed;
+use App\Models\Option;
 use Livewire\Component;
-// ESTE COMPONENTE SE UTILIZA PARA LA GENERACION DE UNA VARIANTE PARA UN PRODUCTO
+
 class ProductVariants extends Component
 {
-
     public $product;
     public $product_features = [];
-
-    // Almacena todas las caracteristicas seleccionadas
     public $selected_features = [];
-
-    // Recupera todas las opciones de la base de datos
     public $options;
-
     public $grouped_features = [];
-
     public $combinations = [];
-
-    // Almacena todas las variantes habilitadas del producto
     public $enabledVariants = [];
 
-    // Variable para el modal de edicion de una variante
     public $variantEdit = [
-        'open' => false,        #variable para controlar el modal
-        'id' => null,           #id de la variante a editar
-        'stock' => null,        #stock de la variante
-        'min_stock' => null,    #stock minimo de la variante
-        'purchase_price' => null, #precio de compra de la variante
-        'sale_price' => null,   #precio de venta de la variante
+        'open' => false,
+        'id' => null,
+        'stock' => null,
+        'min_stock' => null,
+        'purchase_price' => null,
+        'sale_price' => null,
     ];
 
     public function mount($product)
     {
         $this->product = $product;
-        $this->options = Option::all();
+        $this->options = Option::with('features')->get();
         $this->product_features = $this->product->features->pluck('id')->toArray();
         $this->selected_features = $this->product_features;
         $this->getProductVariants();
     }
 
-    // Metodo para recuperar todas las variantes habilitas del producto
     public function getProductVariants()
     {
         $this->enabledVariants = Variant::where('product_id', $this->product->id)
             ->where('is_enabled', true)
+            ->with('features')
             ->get();
     }
 
     private function groupFeaturesByOption()
     {
-        $grouped = []; // Inicializamos el array para agrupar las características
-
-        foreach ($this->selected_features as $featureId) {
-            // Recuperamos la característica por su ID
-            $feature = Feature::find($featureId);
-
-            if ($feature) {
-                // Agrupamos por el option_id de la característica
-                $grouped[$feature->option_id][] = $featureId;
-            }
-        }
-
-        return $grouped; // Devuelve un array agrupado por option_id
+        return Feature::whereIn('id', $this->selected_features)
+            ->get()
+            ->groupBy('option_id')
+            ->map(fn($group) => $group->pluck('id')->toArray())
+            ->toArray();
     }
 
-    // Metodo para generar las combinaciones
     private function generateCombinations($groupedFeatures)
     {
-        // Si solo hay un grupo, devuelve sus elementos directamente
         if (count($groupedFeatures) === 1) {
-            return $this->grouped_features;
-        } elseif (count($groupedFeatures) === 0) {
+            return current($groupedFeatures);
+        }
+
+        if (empty($groupedFeatures)) {
             return [];
         }
 
-        // Convertimos los valores del array asociativo en un array indexado
-        $arrays = array_values($groupedFeatures);
-
-        // Generamos las combinaciones recursivamente
-        return $this->combine($arrays);
+        return $this->combine(array_values($groupedFeatures));
     }
 
-    // Método recursivo para generar combinaciones
     private function combine($arrays, $prefix = [])
     {
         if (empty($arrays)) {
@@ -107,119 +81,100 @@ class ProductVariants extends Component
         return $result;
     }
 
-    // Metodo para guardar las características seleccionadas en feature_product
     public function saveProductFeatures()
     {
-        //Sincroniza las características seleccionadas en la tabla intermedia
         $this->product->features()->sync($this->selected_features);
-
-        //Actualiza el modelo para reflejar los cambios en Livewire
         $this->product = $this->product->fresh();
     }
 
-
-
     public function createVariants()
     {
-        // Llamo al método para guardar las características del producto
+        // Guardar las características seleccionadas
         $this->saveProductFeatures();
 
-        // Agrupo las características seleccionadas por opción
-        $this->grouped_features = $this->groupFeaturesByOption();
+        // Si no hay características seleccionadas, deshabilitar todas las variantes
+        if (empty($this->selected_features)) {
+            Variant::where('product_id', $this->product->id)
+                ->update(['is_enabled' => false]);
 
-        // Si no hay características seleccionadas, no se generan variantes
-        if (empty($this->grouped_features)) {
+            $this->getProductVariants();
+
+            $this->dispatch('swal', [
+                'type' => 'info',
+                'title' => 'Variantes actualizadas',
+                'text' => 'Se han deshabilitado todas las variantes al no haber características seleccionadas.',
+            ]);
             return;
         }
 
-        // Genero todas las combinaciones posibles de características
+        // Generar las combinaciones de variantes
+        $this->grouped_features = $this->groupFeaturesByOption();
         $this->combinations = $this->generateCombinations($this->grouped_features);
 
-        // Recupero todas las variantes existentes del producto
-        $existingVariants = Variant::where('product_id', $this->product->id)->get();
+        $existingVariants = Variant::where('product_id', $this->product->id)
+            ->with('features')
+            ->get();
 
-        // Lista de variantes que deberían estar habilitadas
         $variantsToEnable = [];
 
-        // Si todas las características pertenecen a la misma opción
+        // Caso cuando solo hay un grupo de características (una sola opción)
         if (count($this->grouped_features) === 1) {
-            $singleOptionFeatures = array_values($this->grouped_features)[0];
-
-            foreach ($singleOptionFeatures as $featureId) {
-                // Busco si la variante ya existe con esta característica
-                $variant = $existingVariants->first(function ($v) use ($featureId) {
-                    return $v->features()->where('features.id', $featureId)->exists();
-                });
+            foreach (current($this->grouped_features) as $featureId) {
+                $variant = $existingVariants->first(fn($v) => $v->features->contains('id', $featureId));
 
                 if ($variant) {
-                    // Si la variante está deshabilitada, la habilito
                     if (!$variant->is_enabled) {
                         $variant->update(['is_enabled' => true]);
                     }
-                    // Registro que esta variante debe mantenerse habilitada
                     $variantsToEnable[] = $variant->id;
                 } else {
-                    // Creo la nueva variante habilitada
                     $newVariant = Variant::create([
                         'product_id' => $this->product->id,
                         'is_enabled' => true,
                     ]);
-
-                    // Asocio la variante con la característica
                     $newVariant->features()->attach($featureId);
-
-                    // Registro la nueva variante como habilitada
                     $variantsToEnable[] = $newVariant->id;
                 }
             }
-        } else {
-            // Si hay características de distintas opciones, genero combinaciones
+        }
+        // Caso cuando hay múltiples grupos (múltiples opciones)
+        else {
             foreach ($this->combinations as $combination) {
-                // Busco si ya existe una variante con exactamente las mismas características
                 $variant = $existingVariants->first(function ($v) use ($combination) {
-                    return $v->features()->whereIn('features.id', $combination)->count() === count($combination);
+                    return $v->features->pluck('id')->sort()->values() == collect($combination)->sort()->values();
                 });
 
                 if ($variant) {
-                    // Si la variante existe pero está deshabilitada, la habilito
                     if (!$variant->is_enabled) {
                         $variant->update(['is_enabled' => true]);
                     }
-                    // Registro que esta variante debe mantenerse habilitada
                     $variantsToEnable[] = $variant->id;
                 } else {
-                    // Creo la nueva variante habilitada
                     $newVariant = Variant::create([
                         'product_id' => $this->product->id,
                         'is_enabled' => true,
                     ]);
-
-                    // Asocio la variante con la combinación de características
                     $newVariant->features()->attach($combination);
-
-                    // Registro la nueva variante como habilitada
                     $variantsToEnable[] = $newVariant->id;
                 }
             }
         }
 
-        // Deshabilitar variantes que no están en la lista de variantes activas
+        // Deshabilitar variantes que no están en la lista de habilitadas
         Variant::where('product_id', $this->product->id)
             ->whereNotIn('id', $variantsToEnable)
             ->update(['is_enabled' => false]);
 
-        // Actualizo la lista de variantes habilitadas
+        // Actualizar la lista de variantes
         $this->getProductVariants();
 
-        // Mensaje de exito
         $this->dispatch('swal', [
             'type' => 'success',
-            'title' => 'Variantes creadas',
-            'text' => 'Las variantes se han creado correctamente.',
+            'title' => 'Variantes actualizadas',
+            'text' => 'Las variantes se han actualizado correctamente.',
         ]);
     }
 
-    // Metodo para editar una variante
     public function editVariant($variant)
     {
         $this->variantEdit = [
@@ -232,10 +187,8 @@ class ProductVariants extends Component
         ];
     }
 
-    // Metodo para editar una variante
     public function updateVariant()
     {
-        // validaciones
         $this->validate([
             'variantEdit.stock' => 'required|numeric|min:0',
             'variantEdit.min_stock' => 'required|numeric',
@@ -248,27 +201,17 @@ class ProductVariants extends Component
             'variantEdit.sale_price' => 'precio de venta',
         ]);
 
-        // Busco la variante
-        $variant = Variant::find($this->variantEdit['id']);
-
-        // Actualizo la variante
-        $variant->update([
+        Variant::find($this->variantEdit['id'])->update([
             'stock' => $this->variantEdit['stock'],
             'min_stock' => $this->variantEdit['min_stock'],
             'purchase_price' => $this->variantEdit['purchase_price'],
             'sale_price' => $this->variantEdit['sale_price'],
         ]);
 
-        // Reseteo la variable de edicion
         $this->reset('variantEdit');
-
-        // Actualizo el producto
         $this->product = $this->product->fresh();
-
-        // Actualizo la lista de variantes habilitadas
         $this->getProductVariants();
     }
-
 
     public function render()
     {

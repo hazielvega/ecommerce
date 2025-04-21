@@ -1,128 +1,104 @@
-<div>
-    {{-- Opciones y caracteristicas --}}
-    <section class="rounded-lg bg-slate-700 shadow-lg">
-        {{-- Opciones y caracteristicas --}}
-        <div>
-            {{-- Encabezado --}}
-            <header class="border-b px-6 py-2">
-                <div>
-                    <h1 class="text-lg font-semibold text-gray-300">
-                        Opciones
-                    </h1>
-                </div>
-            </header>
-
-            {{-- Lista de opciones discponibles --}}
-            <div class="p-6">
-                <ul>
-                    @foreach ($options as $option)
-                        <li x-data="{ open: false }" class="mb-2">
-                            {{-- Botón de opción --}}
-                            <button @click="open = !open"
-                                class="w-full text-left bg-gray-800 text-white px-4 py-2 rounded-md focus:outline-none flex justify-between items-center">
-                                <span>{{ $option->name }}</span>
-                                <i x-show="!open" class="fa-solid fa-chevron-down transition"></i>
-                                <i x-show="open" class="fa-solid fa-chevron-up transition"></i>
-                            </button>
-            
-                            {{-- Lista de características (colapsable) --}}
-                            <ul x-show="open" x-collapse class="mt-2 border-l border-gray-500 pl-4">
-                                @foreach ($option->features as $feature)
-                                    <li class="rounded-lg mb-1 bg-gray-500 p-2">
-                                        <label class="inline-flex items-center">
-                                            {{-- Checkbox sincronizado --}}
-                                            <x-checkbox value="{{ $feature->id }}" wire:model="selected_features"
-                                                class="mr-2 ml-4" />
-                                            {{ $feature->description }}
-                                        </label>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </li>
-                    @endforeach
-                </ul>
-            </div>
-
-            {{-- Footer --}}
-            <div class="pb-6 pr-6 flex justify-end">
-                <x-button class="ml-2" wire:click="createVariants">
-                    Guardar
-                </x-button>
-            </div>
-        </div>
-    </section>
-
-    {{-- Variantes --}}
-    <section class="rounded-lg bg-slate-700 shadow-lg mt-6">
-        {{-- Encabezado --}}
-        <header class="border-b px-6 py-2">
-            <div class="flex justify-between">
-                <h1 class="text-lg font-semibold text-gray-300">
-                    Variantes
-                </h1>
-            </div>
+<div class="space-y-6">
+    <!-- Opciones y características -->
+    <section class="rounded-lg bg-gray-900 shadow-lg border border-gray-700">
+        <header class="border-b border-gray-700 px-6 py-4">
+            <h1 class="text-lg font-semibold text-purple-300">
+                Opciones del Producto
+            </h1>
         </header>
 
-        {{-- Listado de variantes asociadas al producto --}}
-        <div class="grid p-6">
-            @if ($product->variants->count() == 0)
-                {{-- Alerta lista vacia --}}
-                <div class="flex items-center p-4 text-sm text-gray-800 rounded-lg bg-gray-50 dark:bg-blue-900 dark:text-gray-300"
-                    role="alert">
-                    <svg class="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                        fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                            d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
-                    </svg>
-                    <span class="sr-only">Info</span>
+        <div class="p-6">
+            <ul class="space-y-3">
+                @foreach ($options as $option)
+                    <li x-data="{ open: false }" class="mb-2">
+                        <button @click="open = !open"
+                            class="w-full text-left bg-gray-700 hover:bg-gray-600 text-purple-200 px-4 py-3 rounded-md focus:outline-none flex justify-between items-center transition-colors">
+                            <span class="font-medium">{{ $option->name }}</span>
+                            <i :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"
+                                class="fas transition-transform duration-200"></i>
+                        </button>
+
+                        <ul x-show="open" x-collapse class="mt-2 border-l-2 border-purple-500 pl-4 space-y-2">
+                            @foreach ($option->features as $feature)
+                                <li class="rounded-lg bg-gray-700 p-3 hover:bg-gray-600 transition-colors">
+                                    <label class="flex items-center space-x-3 cursor-pointer">
+                                        <x-checkbox value="{{ $feature->id }}" wire:model="selected_features"
+                                            class="text-purple-500 border-gray-500" />
+                                        <span class="text-gray-300">{{ $feature->description }}</span>
+                                    </label>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+
+        <footer class="pb-6 pr-6 flex justify-end border-t border-gray-700 pt-4">
+            <x-button wire:click="createVariants" class="bg-purple-600 hover:bg-purple-500 text-white">
+                <i class="fas fa-save mr-2"></i> Generar Variantes
+            </x-button>
+        </footer>
+    </section>
+
+    <!-- Variantes -->
+    <section class="rounded-lg bg-gray-900 shadow-lg border border-gray-700">
+        <header class="border-b border-gray-700 px-6 py-4">
+            <h1 class="text-lg font-semibold text-purple-300">
+                Variantes Disponibles
+            </h1>
+        </header>
+
+        <div class="p-6">
+            @if ($enabledVariants->isEmpty())
+                <div class="flex items-center p-4 rounded-lg bg-purple-900/30 text-purple-200 border border-purple-800">
+                    <i class="fas fa-info-circle mr-3 text-purple-400"></i>
                     <div>
-                        <span class="font-medium">
-                            No hay variantes relacionadas a este producto. Debe agregar opciones para generar variantes.
-                        </span>
+                        <p class="font-medium">No hay variantes disponibles</p>
+                        <p class="text-sm text-purple-300">Selecciona opciones para generar variantes</p>
                     </div>
                 </div>
             @else
-                <ul class="grid grid-cols-1 lg:grid-cols-2 gap-4 uppercase">
-                    {{-- Iteracion sobre las variantes --}}
-                    @foreach ($enabledVariants as $item)
-                        <li class="rounded-lg bg-gray-900 p-4 text-white">
+                <ul class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    @foreach ($enabledVariants as $variant)
+                        <li
+                            class="rounded-lg bg-gray-700 p-4 border border-gray-600 hover:border-purple-500 transition-colors">
                             <div class="grid grid-cols-3 gap-4 items-center">
-                                <div class="col-span-2">
-                                    @foreach ($item->features as $feature)
-                                        <p class="flex flex-col">
-                                            <span class="px-3">
-                                                {{ $feature['description'] }}
-                                            </span>
+                                <div class="col-span-2 space-y-2">
+                                    @foreach ($variant->features as $feature)
+                                        <p class="text-gray-300">
+                                            <span
+                                                class="font-medium text-purple-300">{{ $feature->option->name }}:</span>
+                                            <span class="ml-2">{{ $feature->description }}</span>
                                         </p>
                                     @endforeach
                                 </div>
-                                <div class="flex flex-col space-y-2 items-center">
-                                    {{-- Stock --}}
-                                    <div class="space-x-2">
-                                        <span class="text-sm text-yellow-400">
-                                            Stock: {{ $item->stock }}    
-                                        </span>
-                                        {{-- Stock minimo --}}
-                                        <span class="text-sm text-red-500">
-                                            Min: {{ $item->min_stock }}
+
+                                <div class="flex flex-col space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-400">Stock:</span>
+                                        <span
+                                            class="font-mono {{ $variant->stock <= $variant->min_stock ? 'text-red-400' : 'text-green-400' }}">
+                                            {{ $variant->stock }} <span class="text-gray-500 text-xs">/
+                                                {{ $variant->min_stock }}</span>
                                         </span>
                                     </div>
 
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-400">Compra:</span>
+                                        <span
+                                            class="font-mono text-yellow-400">${{ number_format($variant->purchase_price, 2) }}</span>
+                                    </div>
 
-                                    {{-- Precio de compra --}}
-                                    <span class="text-sm text-gray-400">
-                                        Compra: ${{ $item->purchase_price }}
-                                    </span>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-400">Venta:</span>
+                                        <span
+                                            class="font-mono text-green-400">${{ number_format($variant->sale_price, 2) }}</span>
+                                    </div>
 
-                                    {{-- Precio de venta --}}
-                                    <span class="text-sm text-gray-400">
-                                        Venta: ${{ $item->sale_price }}
-                                    </span>
-
-                                    {{-- Boton para editar la variante --}}
-                                    <button wire:click="editVariant({{ $item }})"
-                                        class="text-sm text-blue-500 hover:underline">
-                                        Editar
+                                    <button wire:click="editVariant({{ $variant }})"
+                                        class="mt-2 text-xs text-purple-400 hover:text-purple-300 hover:underline flex items-center justify-end">
+                                        <i class="fas fa-edit mr-1"></i> Editar
                                     </button>
                                 </div>
                             </div>
@@ -133,67 +109,52 @@
         </div>
     </section>
 
-    {{-- Editar una variante --}}
-    <x-dialog-modal wire:model="variantEdit.open">
-        {{-- Titulo del modal --}}
-        <x-slot name="title">
-            Editar variante
+    <!-- Modal de edición -->
+    <x-dialog-modal wire:model="variantEdit.open" maxWidth="md">
+        <x-slot name="title" class="text-purple-300">
+            <i class="fas fa-edit mr-2"></i> Editar Variante
         </x-slot>
 
-        {{-- Contenido del modal --}}
         <x-slot name="content">
-            {{-- Stock --}}
-            <div class="mb-4">
-                <x-label>
-                    Stock
-                </x-label>
+            <div class="space-y-4">
+                <div>
+                    <x-label class="text-gray-300" value="Stock" />
+                    <x-input type="number"
+                        class="w-full bg-gray-700 text-gray-200 border-gray-600 focus:border-purple-500"
+                        wire:model="variantEdit.stock" />
+                </div>
 
-                <x-input class="w-full" wire:model="variantEdit.stock"></x-input>
+                <div>
+                    <x-label class="text-gray-300" value="Stock Mínimo" />
+                    <x-input type="number"
+                        class="w-full bg-gray-700 text-gray-200 border-gray-600 focus:border-purple-500"
+                        wire:model="variantEdit.min_stock" />
+                </div>
+
+                <div>
+                    <x-label class="text-gray-300" value="Precio de Compra" />
+                    <x-input type="number" step="0.01"
+                        class="w-full bg-gray-700 text-gray-200 border-gray-600 focus:border-purple-500"
+                        wire:model="variantEdit.purchase_price" />
+                </div>
+
+                <div>
+                    <x-label class="text-gray-300" value="Precio de Venta" />
+                    <x-input type="number" step="0.01"
+                        class="w-full bg-gray-700 text-gray-200 border-gray-600 focus:border-purple-500"
+                        wire:model="variantEdit.sale_price" />
+                </div>
             </div>
-
-            {{-- Stock minimo --}}
-            <div class="mb-4">
-                <x-label>
-                    Stock minimo
-                </x-label>
-
-                <x-input class="w-full" wire:model="variantEdit.min_stock"></x-input>
-            </div>
-
-            {{-- Precio de compra --}}
-            <div class="mb-4">
-                <x-label>
-                    Precio de compra
-                </x-label>
-
-                <x-input class="w-full" wire:model="variantEdit.purchase_price"></x-input>
-            </div>
-
-            {{-- Precio de venta --}}
-            <div class="mb-4">
-                <x-label>
-                    Precio de venta
-                </x-label>
-
-                <x-input class="w-full" wire:model="variantEdit.sale_price"></x-input>
-            </div>
-
-            {{-- ERRORES DE VALIDACION --}}
-            <x-validation-errors class="mb-4"></x-validation-errors>
         </x-slot>
 
-        {{-- Footer del modal --}}
         <x-slot name="footer">
-            {{-- Boton para cancelar --}}
-            <x-danger-button x-on:click="show = false">
+            <x-secondary-button wire:click="$set('variantEdit.open', false)" class="bg-gray-700 hover:bg-gray-600">
                 Cancelar
-            </x-danger-button>
+            </x-secondary-button>
 
-            {{-- Boton para confirmar --}}
-            <x-button class="ml-2" wire:click="updateVariant">
+            <x-button wire:click="updateVariant" class="ml-2 bg-purple-600 hover:bg-purple-500">
                 Actualizar
             </x-button>
         </x-slot>
     </x-dialog-modal>
-
 </div>

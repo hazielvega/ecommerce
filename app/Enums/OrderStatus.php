@@ -11,4 +11,9 @@ enum OrderStatus: int
     case Failed = 5;
     case Refunded = 6;
     case Cancelled = 7;
+
+    public static function getValues(): array
+    {
+        return array_column(self::cases(), 'value');
+    }
 }

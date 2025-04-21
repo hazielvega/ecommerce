@@ -19,8 +19,15 @@ class Offer extends Model
         'is_active',
     ];
 
+    protected $casts = [
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
+        'is_active' => 'boolean',
+    ];
+
     // Relación con productos
-    public function products(): BelongsToMany {
+    public function products(): BelongsToMany
+    {
         return $this->belongsToMany(Product::class, 'offer_products');
     }
 }

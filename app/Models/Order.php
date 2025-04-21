@@ -11,8 +11,17 @@ class Order extends Model
 {
     use HasFactory;
 
-    protected $guarded = [
-        'status'
+    // protected $guarded = [
+    //     'status'
+    // ];
+
+    protected $fillable = [
+        'user_id',
+        'status',
+        'content',
+        'address',
+        'status',
+        'receiver_id',
     ];
 
     protected $casts = [
@@ -61,5 +70,15 @@ class Order extends Model
     public function receiver()
     {
         return $this->belongsTo(Receiver::class);
+    }
+
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    public function statusHistory()
+    {
+        return $this->hasMany(OrderStatusHistory::class);
     }
 }

@@ -13,32 +13,35 @@ class ProductPrices extends Component
     public $categories = [];
     public $selected_category = "";
     public $selected_subcategory = "";
+    public $subcategories = [];
     public $adjustment_type = "increase";
     public $percentage;
+    public $showConfirmation = false;
 
-    protected $listeners = ['applyPriceChange' => 'applyPriceChange'];
+    protected $listeners = ['priceChangeApplied' => 'resetForm'];
 
     public function mount()
     {
         $this->categories = Category::all();
     }
 
-    public function getSubcategoriesProperty()
+    public function updatedSelectedCategory($value)
     {
-        return $this->selected_category
-            ? Category::find($this->selected_category)?->subcategories ?? collect([])
+        $this->subcategories = $value 
+            ? Category::find($value)->subcategories 
             : collect([]);
+        $this->selected_subcategory = "";
     }
 
     public function confirmPriceChange()
     {
         $this->validate([
             'percentage' => 'required|numeric|min:1|max:99',
-        ],[],[
+        ], [], [
             'percentage' => 'porcentaje',
         ]);
 
-        $this->dispatch('confirmPriceChange'); // Evento para confirmar en el frontend
+        $this->showConfirmation = true;
     }
 
     public function applyPriceChange()
@@ -46,13 +49,10 @@ class ProductPrices extends Component
         DB::transaction(function () {
             $query = Product::query();
         
-            // Si se seleccionó una categoría, obtener sus subcategorías
             if ($this->selected_category) {
-                $subcategories = Category::find($this->selected_category)?->subcategories->pluck('id')->toArray();
-        
-                if (!empty($subcategories)) {
-                    $query->whereIn('subcategory_id', $subcategories);
-                }
+                $query->whereHas('subcategory', function($q) {
+                    $q->where('category_id', $this->selected_category);
+                });
             }
         
             if ($this->selected_subcategory) {
@@ -62,21 +62,35 @@ class ProductPrices extends Component
             $products = $query->get();
         
             foreach ($products as $product) {
-                $factor = $this->adjustment_type === 'increase' ? (1 + $this->percentage / 100) : (1 - $this->percentage / 100);
+                $factor = $this->adjustment_type === 'increase' 
+                    ? (1 + $this->percentage / 100) 
+                    : (1 - $this->percentage / 100);
                 
                 $newPrice = round($product->sale_price * $factor, 2);
-                $product->update(['sale_price' => max($newPrice, 0)]);
+                $product->update(['sale_price' => max($newPrice, 0.01)]);
         
                 foreach ($product->variants as $variant) {
                     $variantNewPrice = round($variant->sale_price * $factor, 2);
-                    $variant->update(['sale_price' => max($variantNewPrice, 0)]);
+                    $variant->update(['sale_price' => max($variantNewPrice, 0.01)]);
                 }
             }
         });
 
-        $this->reset(['selected_category', 'selected_subcategory', 'adjustment_type', 'percentage']);        
+        $this->showConfirmation = false;
+        $this->resetForm();
+        $this->dispatch('swal', [
+            'type' => 'success',
+            'title' => 'Ajuste aplicado',
+            'message' => 'Los precios se han actualizado correctamente.'
+        ]);
 
-        $this->dispatch('priceChangeApplied'); // Notificación de éxito
+        return redirect()->route('admin.products.index');
+    }
+
+    public function resetForm()
+    {
+        $this->reset(['selected_category', 'selected_subcategory', 'adjustment_type', 'percentage']);
+        $this->subcategories = collect([]);
     }
 
     public function render()

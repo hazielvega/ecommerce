@@ -14,44 +14,49 @@ use Illuminate\Database\Eloquent\Builder;
 class ProductsExport implements FromCollection, ShouldAutoSize, WithHeadings, WithColumnWidths, WithStyles
 {
     protected $filter;
+    protected $subcategoryId;
 
-    public function __construct($filter)
+    public function __construct($filter, $subcategoryId = null)
     {
         $this->filter = $filter;
+        $this->subcategoryId = $subcategoryId;
     }
 
     public function collection()
     {
-        $query = Product::with('subcategory.category')
-            ->withSum('variants as total_stock', 'stock'); // Calcula el stock total
+        $query = Product::with(['subcategory.category', 'variants'])
+            ->withSum('variants as total_stock', 'stock');
     
         // Aplicar filtros
         if ($this->filter === 'low_stock') {
-            $query->having('total_stock', '<', 10);
-        } elseif (is_numeric($this->filter)) {
-            // Filtrar por categoría
-            $query->whereHas('subcategory.category', function (Builder $q) {
-                $q->where('id', $this->filter);
-            });
-        } elseif (str_ends_with($this->filter, '_low_stock')) {
-            // Filtrar productos de una categoría específica con bajo stock
+            $query->having('total_stock', '<', \DB::raw('products.min_stock'));
+        } 
+        elseif (str_ends_with($this->filter, '_low_stock')) {
             $categoryId = str_replace('_low_stock', '', $this->filter);
-            if (is_numeric($categoryId)) {
-                $query->whereHas('subcategory.category', function (Builder $q) use ($categoryId) {
-                    $q->where('id', $categoryId);
-                })->having('total_stock', '<', 10);
-            }
+            $query->whereHas('subcategory.category', fn($q) => $q->where('id', $categoryId))
+                  ->having('total_stock', '<', \DB::raw('products.min_stock'));
+        } 
+        elseif (is_numeric($this->filter)) {
+            $query->whereHas('subcategory.category', fn($q) => $q->where('id', $this->filter));
+        }
+
+        if ($this->subcategoryId) {
+            $query->where('subcategory_id', $this->subcategoryId);
         }
     
         return $query->get()->map(function ($product) {
             return [
-                'Código' => $product->sku,
+                'ID' => $product->id,
                 'Nombre' => $product->name,
-                'Precio de compra' => $product->purchase_price,
-                'Precio de venta' => $product->sale_price,
-                'Subcategoría' => $product->subcategory->name ?? 'Sin Subcategoría',
-                'Categoría' => $product->subcategory->category->name ?? 'Sin Categoría',
-                'Stock Total' => $product->total_stock, // Se obtiene de `withSum`
+                'Descripción' => $product->description,
+                'Precio Compra' => $product->purchase_price,
+                'Precio Venta' => $product->sale_price,
+                'Stock Total' => $product->total_stock,
+                'Stock Mínimo' => $product->min_stock,
+                'Estado' => $product->is_enabled ? 'Activo' : 'Inactivo',
+                'Subcategoría' => $product->subcategory->name ?? 'N/A',
+                'Categoría' => $product->subcategory->category->name ?? 'N/A',
+                'Fecha Creación' => $product->created_at->format('d/m/Y'),
             ];
         });
     }
@@ -59,36 +64,44 @@ class ProductsExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
     public function headings(): array
     {
         return [
-            'Código',
+            'ID',
             'Nombre',
-            'Precio de compra',
-            'Precio de venta',
+            'Descripción',
+            'Precio Compra',
+            'Precio Venta',
+            'Stock Total',
+            'Stock Mínimo',
+            'Estado',
             'Subcategoría',
             'Categoría',
-            'Stock Total',
+            'Fecha Creación'
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
         return [
-            1 => ['font' => ['bold' => true, 'size' => 12, 'color' => ['rgb' => 'FFFFFF']]],
-            'A1:F1' => ['fill' => ['fillType' => 'solid', 'color' => ['rgb' => '4CAF50']]],
-            'G1' => ['fill' => ['fillType' => 'solid', 'color' => ['rgb' => 'FFFF00']]],
-            'A' => ['alignment' => ['horizontal' => 'center']],
+            1 => [
+                'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                'fill' => ['fillType' => 'solid', 'color' => ['rgb' => '4B5563']]
+            ],
+            'A:K' => ['alignment' => ['wrapText' => true]],
+            'H' => [
+                'font' => ['color' => ['rgb' => 'FFFFFF']],
+                'fill' => [
+                    'fillType' => 'solid', 
+                    'color' => ['rgb' => $this->filter === 'low_stock' ? 'EF4444' : '10B981']
+                ]
+            ],
         ];
     }
 
     public function columnWidths(): array
     {
         return [
-            'A' => 10,
-            'B' => 30,
-            'C' => 25,
-            'D' => 25,
-            'E' => 20,
-            'F' => 20,
-            'G' => 15,
+            'A' => 10, 'B' => 30, 'C' => 40, 'D' => 15, 
+            'E' => 15, 'F' => 15, 'G' => 15, 'H' => 12,
+            'I' => 20, 'J' => 20, 'K' => 15
         ];
     }
 }

@@ -9,6 +9,6 @@
 ]">
 
     {{-- Llamo al datatable para mostrar todas las ordenes --}}
-    @livewire('admin.orders.order-table')
+    @livewire('admin.orders.order-index')
 
 </x-admin-layout>

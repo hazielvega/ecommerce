@@ -1,51 +1,82 @@
-<div>
-    <div class="card">
-        <h1 class="text-lg font-semibold mb-4 text-white">
-            Reporte de stock de productos
-        </h1>
-        {{-- Productos --}}
-        <div class="mb-4">
-            <x-label class="mb-2">
-                Productos
-            </x-label>
+<div class="space-y-6">
+    <!-- Card Principal -->
+    <section class="rounded-lg bg-gray-900 shadow-lg border border-gray-700 p-6">
+        <header class="border-b border-gray-700 pb-4 mb-6">
+            <h1 class="text-xl font-bold text-purple-300 flex items-center">
+                <i class="fas fa-file-excel mr-2"></i>
+                Exportar Reportes de Stock
+            </h1>
+            <p class="text-gray-400 mt-1">Genera reportes en Excel de productos y variantes</p>
+        </header>
 
-            <div class="grid grid-cols-6 gap-4">
-                <x-select wire:model="filter" class="col-span-5">
-                    <option value="all">Todos los productos</option>
-                    {{-- <option value="low_stock">Todos los productos con bajo stock</option> --}}
+        <!-- Filtros Comunes -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <!-- Categoría -->
+            <div>
+                <x-label class="text-gray-300 mb-1" value="Filtrar por Categoría" />
+                <select wire:model.live="selectedCategory"
+                    class="w-full bg-gray-700 border-gray-600 text-white rounded-lg focus:ring-purple-500 focus:border-purple-500">
+                    <option value="">Todas las categorías</option>
                     @foreach ($categories as $category)
-                        <option value="{{ $category->id }}">Productos de {{ $category->name }}</option>
-                        {{-- <option value="{{ $category->id }}_low_stock">Productos de {{ $category->name }} con bajo stock</option> --}}
+                        <option value="{{ $category->id }}">{{ $category->name }}</option>
                     @endforeach
-                </x-select>
+                </select>
+            </div>
 
-                <a wire:click="exportProducts" class="btn btn-green hover:cursor-pointer text-center">
-                    <i class="fas fa-file-excel text-lg ml-2"></i>
-                </a>
+            <!-- Subcategoría -->
+            <div>
+                <x-label class="text-gray-300 mb-1" value="Filtrar por Subcategoría" />
+                <select wire:model="selectedSubcategory"
+                    class="w-full bg-gray-700 border-gray-600 text-white rounded-lg focus:ring-purple-500 focus:border-purple-500">
+                    <option value="">Todas las subcategorías</option>
+                    @foreach ($subcategories as $subcategory)
+                        <option value="{{ $subcategory->id }}">{{ $subcategory->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- Alerta de Stock -->
+            <div class="flex items-end">
+                <label class="inline-flex items-center mt-1">
+                    <input type="checkbox" wire:model="stockAlertOnly"
+                        class="rounded bg-gray-700 border-gray-600 text-purple-500 focus:ring-purple-500">
+                    <span class="ml-2 text-gray-300">Solo con bajo stock</span>
+                </label>
             </div>
         </div>
 
-        {{-- Variantes --}}
-        <div class="mb-4">
-            <x-label class="mb-2">
-                Variantes
-            </x-label>
-
-            <div class="grid grid-cols-6 gap-4">
-                <x-select wire:model="filter" class="col-span-5">
-                    <option value="all">Todas las variantes</option>
-                    <option value="low_stock">Variantes con bajo stock</option>
-                    @foreach ($categories as $category)
-                        <option value="{{ $category->id }}">Variantes de {{ $category->name }}</option>
-                        <option value="{{ $category->id }}_low_stock">Variantes de {{ $category->name }} con bajo stock
-                        </option>
-                    @endforeach
-                </x-select>
-
-                <a wire:click="exportVariants" class="btn btn-green hover:cursor-pointer text-center">
-                    <i class="fas fa-file-excel text-lg ml-2"></i>
-                </a>
+        <!-- Exportar Productos -->
+        <section class="rounded-lg bg-gray-800 border border-gray-700 p-4 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-white flex items-center">
+                        <i class="fas fa-box mr-2"></i>
+                        Exportar Productos
+                    </h2>
+                    <p class="text-sm text-gray-400 mt-1">Genera un reporte de todos los productos</p>
+                </div>
+                <x-button wire:click="exportProducts" class="bg-green-600 hover:bg-green-500">
+                    <i class="fas fa-file-excel mr-2"></i>
+                    Exportar
+                </x-button>
             </div>
-        </div>
-    </div>
+        </section>
+
+        <!-- Exportar Variantes -->
+        <section class="rounded-lg bg-gray-800 border border-gray-700 p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-white flex items-center">
+                        <i class="fas fa-boxes mr-2"></i>
+                        Exportar Variantes
+                    </h2>
+                    <p class="text-sm text-gray-400 mt-1">Genera un reporte de todas las variantes</p>
+                </div>
+                <x-button wire:click="exportVariants" class="bg-green-600 hover:bg-green-500">
+                    <i class="fas fa-file-excel mr-2"></i>
+                    Exportar
+                </x-button>
+            </div>
+        </section>
+    </section>
 </div>

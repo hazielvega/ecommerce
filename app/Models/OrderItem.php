@@ -31,5 +31,10 @@ class OrderItem extends Model
     {
         return $this->belongsTo(Variant::class);
     }
-}
 
+
+    public function offer()
+    {
+        return $this->belongsTo(Offer::class, 'offer_id');
+    }
+}

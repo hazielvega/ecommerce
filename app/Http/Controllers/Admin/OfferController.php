@@ -12,4 +12,9 @@ class OfferController extends Controller
     {
         return view('admin.offers.edit', compact('offer'));
     }
+
+    public function create()
+    {
+        return view('admin.offers.create');
+    }
 }

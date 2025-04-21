@@ -31,6 +31,8 @@ class ProductCreate extends Component
         'related_products' => [],
     ];
 
+    public $related_products = [];
+
     public $availableProducts = [];
     public $searchTerm = '';
 
@@ -79,7 +81,7 @@ class ProductCreate extends Component
 
     public function addRelatedProduct($productId)
     {
-        if (count($this->product['related_products']) >= 8) {
+        if (count($this->related_products) >= 8) {
             $this->dispatch('swal', [
                 'icon' => 'error',
                 'title' => 'Límite alcanzado',
@@ -88,15 +90,16 @@ class ProductCreate extends Component
             return;
         }
 
-        if (!in_array($productId, $this->product['related_products'])) {
-            $this->product['related_products'][] = $productId;
+        if (!in_array($productId, $this->related_products)) {
+            $this->related_products[] = $productId;
+            $this->loadAvailableProducts();
         }
     }
 
     public function removeRelatedProduct($index)
     {
-        unset($this->product['related_products'][$index]);
-        $this->product['related_products'] = array_values($this->product['related_products']);
+        unset($this->related_products[$index]);
+        $this->related_products = array_values($this->related_products);
     }
 
     public function updatedImages()
@@ -130,6 +133,14 @@ class ProductCreate extends Component
             'product.min_stock' => 'required|integer|min:0',
             'product.related_products' => 'array|max:8',
             'product.related_products.*' => 'exists:products,id',
+        ],[],[
+            'product.sku' => 'código',
+            'product.name' => 'nombre',
+            'product.description' => 'descripción',
+            'product.purchase_price' => 'precio de compra',
+            'product.sale_price' => 'precio de venta',
+            'product.subcategory_id' => 'subcategoría',
+            'product.min_stock' => 'stock mínimo',
         ]);
 
         try {
@@ -139,8 +150,10 @@ class ProductCreate extends Component
             })->toArray();
 
             $this->product['image_path'] = json_encode($imagePaths);
-            $this->product['related_products'] = $this->product['related_products'] ?? [];
+            $this->product['related_products'] = $this->related_products ?? [];
             $this->product['related_products'] = json_encode($this->product['related_products']);
+
+            // dump($this->product['related_products'], $this->related_products);
 
             // Crear producto
             $product = Product::create($this->product);

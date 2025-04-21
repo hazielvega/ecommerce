@@ -10,11 +10,18 @@ use App\Models\Product;
 use App\Models\Subcategory;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+use Livewire\WithPagination;
 
 class OfferCreate extends Component
 {
-    public $categories = [];
-    public $selected_products = [];
+    use WithPagination;
+
+    public array $selected_products = [];
+    public $search = '';
+    public $selected_category = '';
+    public $selected_subcategory = '';
+    public $subcategories = [];
 
     public $name;
     public $description;
@@ -22,118 +29,148 @@ class OfferCreate extends Component
     public $start_date;
     public $end_date;
 
-    public function mount()
+    protected $listeners = ['removeSelectedProduct'];
+
+    public function updatedSelectedCategory($value)
     {
-        $this->categories = Category::with('subcategories.products')->get();
+        $this->subcategories = Subcategory::where('category_id', $value)->get();
+        $this->selected_subcategory = ''; // Solo reseteamos la subcategoría
+        $this->resetPage(); // Solo si estás usando paginación
     }
 
-    public function toggleCategory($categoryId)
+    public function addProductsFromCategory()
     {
-        $category = $this->categories->where('id', $categoryId)->first();
-        if (!$category) return;
+        $query = Product::query()->where('is_enabled', 1);
 
-        $categoryProducts = $category->subcategories->flatMap->products->pluck('id')->toArray();
-        $allSelected = $this->allProductsSelected($categoryProducts);
+        if ($this->selected_subcategory) {
+            $query->where('subcategory_id', $this->selected_subcategory);
+        } elseif ($this->selected_category) {
+            $query->whereHas('subcategory', function ($q) {
+                $q->where('category_id', $this->selected_category);
+            });
+        }
 
-        foreach ($categoryProducts as $productId) {
-            if ($allSelected) {
-                unset($this->selected_products[$productId]);
-            } else {
-                $this->selected_products[$productId] = true;
+        $products = $query->get();
+
+        foreach ($products as $product) {
+            if (!array_key_exists($product->id, $this->selected_products)) {
+                $this->selected_products[$product->id] = [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'price' => $product->sale_price,
+                ];
             }
         }
+
+        $this->dispatch('notify', [
+            'type' => 'success',
+            'title' => 'Productos agregados',
+            'message' => count($products) . ' productos han sido agregados a la oferta.',
+        ]);
     }
 
-
-    public function toggleSubcategory($subcategoryId)
+    public function removeSelectedProduct($productId)
     {
-        $subcategory = Subcategory::with('products')->find($subcategoryId);
-        if (!$subcategory) return;
-
-        $subcategoryProducts = $subcategory->products->pluck('id')->toArray();
-        $allSelected = $this->allProductsSelected($subcategoryProducts);
-
-        foreach ($subcategoryProducts as $productId) {
-            if ($allSelected) {
-                unset($this->selected_products[$productId]);
-            } else {
-                $this->selected_products[$productId] = true;
-            }
-        }
+        unset($this->selected_products[$productId]);
     }
-
-
-    public function toggleProduct($productId)
-    {
-        if (isset($this->selected_products[$productId])) {
-            unset($this->selected_products[$productId]);
-        } else {
-            $this->selected_products[$productId] = true;
-        }
-    }
-
-
-    private function allProductsSelected($productIds)
-    {
-        foreach ($productIds as $id) {
-            if (!isset($this->selected_products[$id])) {
-                return false;
-            }
-        }
-        return true;
-    }
-
 
     public function createOffer()
     {
-
-        // dd($this->selected_products);
         $this->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'name' => 'required|string|max:255|unique:offers,name',
+            'description' => 'nullable|string|max:500',
             'discount_percentage' => 'required|numeric|min:1|max:99',
-            'start_date' => 'required|date|before:end_date',
-            'end_date' => 'required|date|after:start_date',
-        ],[],[
-            'name' => 'Nombre',
-            'description' => 'Descripción',
-            'discount_percentage' => 'Descuento %',
-            'start_date' => 'Fecha de inicio',
-            'end_date' => 'Fecha de finalización',
+            'start_date' => [
+                'required',
+                'date',
+                'after_or_equal:today',
+                'before:end_date'
+            ],
+            'end_date' => [
+                'required',
+                'date',
+                'after:start_date',
+                function ($attribute, $value, $fail) {
+                    if (Carbon::parse($value)->diffInDays($this->start_date) > 365) {
+                        $fail('La oferta no puede durar más de 1 año');
+                    }
+                }
+            ],
+            'selected_products' => [
+                'required',
+                'array',
+                'min:1',
+                function ($attribute, $value, $fail) {
+                    if (count($value) < 1) {
+                        $fail('Debe seleccionar al menos un producto');
+                    }
+                }
+            ]
+        ], [], [
+            'name' => 'nombre',
+            'description' => 'descripción',
+            'discount_percentage' => 'porcentaje de descuento',
+            'start_date' => 'fecha de inicio',
+            'end_date' => 'fecha de finalización',
+            'selected_products' => 'productos seleccionados'
         ]);
-    
-        DB::transaction(function () {
-            // Crear la oferta
-            $offer = Offer::create([
-                'name' => $this->name,
-                'description' => $this->description,
-                'discount_percentage' => $this->discount_percentage,
-                'start_date' => $this->start_date,
-                'end_date' => $this->end_date,
-                'is_active' => true,
-            ]);
-    
-            // Obtener solo los IDs de los productos seleccionados
-            $productIds = array_keys($this->selected_products);
-    
-            foreach ($productIds as $productId) {
-                OfferProduct::create([
-                    'offer_id' => $offer->id,
-                    'product_id' => $productId,
+
+        try {
+            DB::transaction(function () {
+                $offer = Offer::create([
+                    'name' => $this->name,
+                    'description' => $this->description,
+                    'discount_percentage' => $this->discount_percentage,
+                    'start_date' => $this->start_date,
+                    'end_date' => $this->end_date,
+                    'is_active' => true,
                 ]);
-            }
-        });
-    
-        session()->flash('swal', [
-            'icon' => 'success',
-            'title' => 'Oferta creada',
-            'text' => 'Oferta creada correctamente',
-        ]);
-        return redirect()->route('admin.products.index'); // Ajusta la ruta según sea necesario
+
+                $productIds = array_keys($this->selected_products);
+
+                $offer->products()->attach($productIds);
+            });
+
+            $this->dispatch('notify', [
+                'type' => 'success',
+                'title' => 'Oferta creada',
+                'message' => 'La oferta se ha creado correctamente para los productos seleccionados.',
+            ]);
+
+            return redirect()->route('admin.products.index');
+        } catch (\Exception $e) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'title' => 'Error al crear oferta',
+                'message' => $e->getMessage(),
+            ]);
+        }
     }
 
     public function render()
     {
-        return view('livewire.admin.offers.offer-create');
+        $products = Product::query()
+            ->where('is_enabled', 1)
+            ->when($this->search, function ($query) {
+                $query->where('name', 'like', '%' . $this->search . '%');
+            })
+            ->when($this->selected_subcategory, function ($query) {
+                $query->where('subcategory_id', $this->selected_subcategory);
+            })
+            ->when($this->selected_category && !$this->selected_subcategory, function ($query) {
+                $query->whereHas('subcategory', function ($q) {
+                    $q->where('category_id', $this->selected_category);
+                });
+            })
+            ->orderBy('name')
+            ->limit(20)
+            ->get();
+
+        $categories = Category::all();
+
+        return view('livewire.admin.offers.offer-create', [
+            'products' => $products,
+            'categories' => $categories
+        ]);
     }
 }
