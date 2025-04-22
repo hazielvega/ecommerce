@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\Variant;
 use Gloudemans\Shoppingcart\Facades\Cart;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -155,30 +156,62 @@ class ShoppingCart extends Component
     public function validateBeforeCheckout()
     {
         Cart::instance('shopping');
-        $validItems = Cart::content()->filter(function ($item) {
-            return $item->qty <= $item->options['stock'];
-        });
+        $hasInvalidItems = false;
+        $outOfStockProducts = [];
 
-        if ($validItems->isEmpty()) {
-            $message = "No hay productos válidos en tu carrito. ";
+        // Verificar cada item en el carrito con stock actualizado
+        foreach (Cart::content() as $item) {
+            // Obtener la variante actual desde la base de datos
+            $variant = Variant::find($item->options['variant_id']);
+            $currentStock = $variant ? $variant->stock : 0;
 
-            $outOfStockItems = Cart::content()->filter(function ($item) {
-                return $item->qty > $item->options['stock'];
-            });
+            // // Actualizar el stock en las opciones del carrito
+            // Cart::update($item->rowId, ['options' => [
+            //     'stock' => $currentStock,
+            //     'features' => $item->options['features'],
+            //     'image' => $item->options['image'],
+            //     'offer' => $item->options['offer'] ?? null,
+            //     'original_price' => $item->options['original_price'] ?? null
+            // ]]);
 
-            if ($outOfStockItems->isNotEmpty()) {
-                $message .= "Algunos productos no tienen suficiente stock disponible.";
+            // Verificar si el item es válido
+            if ($item->qty > $currentStock) {
+                $hasInvalidItems = true;
+                $outOfStockProducts[] = $item->name;
             }
+        }
+
+        // Si hay items inválidos
+        if ($hasInvalidItems) {
+            $message = "Algunos productos no tienen suficiente stock disponible:";
+            $message .= "<ul class='list-disc pl-5 mt-2'>";
+            foreach ($outOfStockProducts as $productName) {
+                $message .= "<li>{$productName}</li>";
+            }
+            $message .= "</ul>";
 
             $this->dispatch('swal', [
                 'icon' => 'error',
                 'title' => 'Error en el carrito',
                 'text' => $message,
+                'html' => $message // Para soportar HTML en el mensaje
             ]);
 
             return;
         }
 
+        // Si el carrito está vacío
+        if (Cart::count() === 0) {
+            $this->dispatch('swal', [
+                'icon' => 'error',
+                'title' => 'Carrito vacío',
+                'text' => 'No hay productos en tu carrito.',
+            ]);
+
+            return;
+        }
+
+        // Todo válido, redirigir al checkout
         return redirect()->route('shipping.index');
     }
 

@@ -64,14 +64,48 @@ class PaymentController extends Controller
     public function createPreference()
     {
         Cart::instance('shopping');
-        $content = Cart::content()->filter(function ($item) {
-            return $item->qty <= $item->options['stock'];
-        });
+        $hasInvalidItems = false;
+        $outOfStockProducts = [];
+        $validItems = collect();
 
-        if ($content->isEmpty()) {
-            return redirect()->route('cart.show')->with('error', 'Algunos productos superan el stock disponible');
+        // Verificar cada item en el carrito con stock actualizado
+        foreach (Cart::content() as $item) {
+            // Obtener la variante actual desde la base de datos
+            $variant = Variant::find($item->options['variant_id']);
+            $currentStock = $variant ? $variant->stock : 0;
+
+            // Verificar si el item es válido
+            if ($item->qty > $currentStock) {
+                $hasInvalidItems = true;
+                $outOfStockProducts[] = $item->name;
+                continue;
+            }
+
+            // Si el item es válido, agregarlo a la colección
+            $validItems->push($item);
         }
 
+        // Si hay items inválidos
+        if ($hasInvalidItems) {
+            $message = "Algunos productos no tienen suficiente stock disponible:";
+            $message .= "<ul class='list-disc pl-5 mt-2'>";
+            foreach ($outOfStockProducts as $productName) {
+                $message .= "<li>{$productName}</li>";
+            }
+            $message .= "</ul>";
+
+            return redirect()->route('cart.index')->with([
+                'error' => 'Productos sin stock suficiente',
+                'error_details' => $message
+            ]);
+        }
+
+        // Si el carrito está vacío
+        if ($validItems->isEmpty()) {
+            return redirect()->route('cart.index')->with('error', 'No hay productos válidos en tu carrito');
+        }
+
+        // Verificar datos de envío y facturación
         $shipping_address = $this->getShippingAddress();
         $billing_address = $this->getBillingAddress();
         $receiver = $this->getReceiver();
@@ -81,12 +115,12 @@ class PaymentController extends Controller
             return redirect()->route('checkout')->with('error', 'Completa tus datos de envío y facturación');
         }
 
-        // Calcular totales
-        $subtotal = $content->sum(function ($item) {
+        // Calcular totales con items válidos
+        $subtotal = $validItems->sum(function ($item) {
             return ($item->options['original_price'] ?? $item->price) * $item->qty;
         });
 
-        $discount = $content->sum(function ($item) {
+        $discount = $validItems->sum(function ($item) {
             if (!empty($item->options['offer'])) {
                 return ($item->options['original_price'] - $item->price) * $item->qty;
             }
@@ -94,8 +128,6 @@ class PaymentController extends Controller
         });
 
         $total = ($subtotal - $discount) + $shipping_price;
-
-        // dd($total);
 
         // Crear la orden con estado Pending
         $order = Order::create([
@@ -106,13 +138,13 @@ class PaymentController extends Controller
             'billing_address_id' => $billing_address->id,
             'payment_id' => null, // Temporal, se actualizará después
             'total' => $total,
-            'status' => OrderStatus::Pending->value,
+            'status' => OrderStatus::Pendiente->value,
             'shipping_cost' => $shipping_price,
         ]);
 
-        // Crear items de la orden
-        foreach ($content as $item) {
-            $orderItemData = [
+        // Crear items de la orden solo con productos válidos
+        foreach ($validItems as $item) {
+            OrderItem::create([
                 'order_id' => $order->id,
                 'variant_id' => $item->options['variant_id'],
                 'offer_id' => $item->options['offer']['offer_id'] ?? null,
@@ -121,14 +153,11 @@ class PaymentController extends Controller
                 'original_price' => $item->options['offer']['original_price'] ?? $item->price,
                 'discount_percentage' => $item->options['offer']['discount_percent'] ?? 0,
                 'subtotal' => $item->price * $item->qty,
-            ];
-
-            // dd($orderItemData);
-
-            OrderItem::create($orderItemData);
+            ]);
         }
 
-        $items = $content->map(function ($item) {
+        // Preparar items para MercadoPago
+        $items = $validItems->map(function ($item) {
             return [
                 'title' => $item->name,
                 'quantity' => (int) $item->qty,
@@ -140,14 +169,25 @@ class PaymentController extends Controller
         $preferenceData = [
             'items' => $items,
             'payer' => [
-                'email' => "test_user_123456@testuser.com",
+                'name' => $receiver->name,
+                'surname' => $receiver->last_name,
+                'email' => auth()->user()->email, // Usar email real del usuario
+                'phone' => [
+                    'number' => $receiver->phone
+                ],
+                'address' => [
+                    'street_name' => $shipping_address->calle,
+                    'street_number' => $shipping_address->numero,
+                    'zip_code' => $shipping_address->codigo_postal
+                ]
             ],
             'auto_return' => 'approved',
             'back_urls' => [
                 'success' => route('payment.success'),
                 'failure' => route('payment.failure'),
             ],
-            'external_reference' => $order->id, // Usamos el ID de la orden como referencia
+            'external_reference' => $order->id,
+            'notification_url' => route('payment.webhook'), // Para recibir notificaciones IPN
         ];
 
         try {
@@ -155,12 +195,15 @@ class PaymentController extends Controller
             $preference = $client->create($preferenceData);
 
             // Actualizar la orden con el ID de la preferencia
-            $order->update(['payment_id' => $preference->id]);
+            $order->update([
+                'payment_id' => $preference->id,
+                'card_number' => request('card_number') // Si estás capturando esta info
+            ]);
 
             return redirect()->away($preference->init_point);
         } catch (MPApiException $e) {
             // Si hay error, cambiar estado a Cancelled
-            $order->update(['status' => OrderStatus::Cancelled->value]);
+            $order->update(['status' => OrderStatus::Cancelado->value]);
 
             return back()->with('error', 'Error al procesar el pago: ' . $e->getMessage());
         }
@@ -183,7 +226,7 @@ class PaymentController extends Controller
 
         // Actualizar estado de la orden a Processing
         $order->update([
-            'status' => OrderStatus::Processing->value,
+            'status' => OrderStatus::Procesando->value,
             'payment_id' => $preferenceId ?? $order->payment_id,
         ]);
 
@@ -210,7 +253,7 @@ class PaymentController extends Controller
 
         if ($orderId) {
             Order::where('id', $orderId)
-                ->update(['status' => OrderStatus::Cancelled->value]);
+                ->update(['status' => OrderStatus::Cancelado->value]);
         }
 
         return view('payment.failure');
@@ -223,6 +266,7 @@ class PaymentController extends Controller
             'shipping_address' => $order->shippingAddress,
             'billing_address' => $order->billingAddress,
             'receiver' => $order->receiver,
+            'shipping_cost' => $order->shipping_cost,
         ])->setPaper('a4');
 
         $pdfPath = 'tickets/ticket-' . $order->id . '.pdf';

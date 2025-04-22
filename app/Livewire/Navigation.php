@@ -10,39 +10,40 @@ use Livewire\Component;
 
 class Navigation extends Component
 {
-    // Recupero las categorias
     public $categories;
-
-    // Texto ingresado en el buscador para filtrar productos
     public $search;
+
+    protected $listeners = ['cartUpdated' => '$refresh'];
 
     public function mount()
     {
-        $this->categories = Category::all();
+        $this->categories = Category::with('subcategories')->get();
     }
 
-    // Escucha el evento "search" y actualiza la propiedad $search con el texto del buscador
     #[On('search')]
-    public function search($search)
+    public function updateSearch($search)
     {
-        $this->search = $search; // Almacena el texto ingresado en el buscador
+        $this->search = $search;
     }
 
-    // Metodo para realizar una busqueda de productos
     public function searchProduct()
     {
-        //Redirecciona a la busqueda de productos
-        return redirect()->route('products.search', ['search' => $this->search]);    
+        return redirect()->route('products.search', ['search' => $this->search]);
+    }
+
+    #[Computed]
+    public function filteredProducts()
+    {
+        return Product::when($this->search, function ($query) {
+            $query->where('name', 'like', '%' . $this->search . '%');
+        })
+            ->select('id', 'name', 'image_path', 'sale_price')
+            ->take(5)
+            ->get();
     }
 
     public function render()
     {
-        // Recupera los productos aplicando los filtros seleccionados
-        $products = Product::when($this->search, function ($query) {
-            $query->where('name', 'like', '%' . $this->search . '%'); // Filtra productos por nombre
-        })->take(5)->get();
-
-        // Devuelve la vista del componente junto con los productos filtrados
-        return view('livewire.navigation', compact('products'));
+        return view('livewire.navigation');
     }
 }

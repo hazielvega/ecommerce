@@ -178,7 +178,7 @@
                 <!-- Precios -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">Precio de compra</label>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Precio de costo</label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">$</span>
                             <input type="number" step="0.01" min="0" wire:model="product.purchase_price"

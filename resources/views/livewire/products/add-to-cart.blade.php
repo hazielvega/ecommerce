@@ -28,7 +28,7 @@
     </div>
 
     {{-- Detalles del Producto --}}
-    <div class="space-y-6">
+    <div class="space-y-4">
         <!-- Título -->
         <div>
             <h1 class="text-3xl font-bold text-white uppercase tracking-wide">{{ $product->name }}</h1>
@@ -57,11 +57,14 @@
         <div class="flex items-center justify-between bg-gray-800/50 p-4 rounded-lg">
             <div class="flex items-end space-x-3">
                 @if ($product->offers->isNotEmpty())
-                    <p class="text-4xl font-bold text-amber-200">
-                        ${{ $variant->sale_price * (1 - $product->offers->first()->discount_percentage / 100) }}</p>
-                    <p class="text-xl text-gray-400 line-through">${{ $variant->sale_price }}</p>
+                    <div class="flex items-center space-x-2">
+                        <p class="text-2xl font-bold text-amber-200">
+                            ${{ $variant->sale_price * (1 - $product->offers->first()->discount_percentage / 100) }}
+                        </p>
+                        <p class="text-xl text-gray-400 line-through">${{ $variant->sale_price }}</p>
+                    </div>
                 @else
-                    <p class="text-4xl font-bold text-amber-200">${{ $variant->sale_price }}</p>
+                    <p class="text-xl font-bold text-amber-200">${{ $variant->sale_price }}</p>
                 @endif
             </div>
             <div class="flex items-center space-x-2">
@@ -157,9 +160,37 @@
         </div>
 
         <!-- Descripción -->
-        <div class="bg-gray-800/50 p-4 rounded-lg">
-            <h3 class="text-lg font-semibold text-gray-300 mb-2">Descripción</h3>
-            <p class="text-gray-400 leading-relaxed">{{ $product->description }}</p>
+        <div class="bg-gray-800/60 p-5 rounded-xl border border-gray-700">
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-300 mb-3 flex items-center">
+                        <i class="fas fa-align-left mr-3 text-amber-400"></i>
+                        Descripción
+                    </h3>
+                    <p class="text-gray-400 leading-relaxed">{{ $product->description }}</p>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-300 mb-3 flex items-center">
+                        <i class="fas fa-info-circle mr-3 text-amber-400"></i>
+                        Detalles del producto
+                    </h3>
+                    <ul class="text-gray-400 space-y-2">
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle mr-3 mt-1 text-amber-400/80 text-sm"></i>
+                            <span>Material premium duradero</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle mr-3 mt-1 text-amber-400/80 text-sm"></i>
+                            <span>Garantía del fabricante incluida</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle mr-3 mt-1 text-amber-400/80 text-sm"></i>
+                            <span>Instrucciones de cuidado incluidas</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 </div>

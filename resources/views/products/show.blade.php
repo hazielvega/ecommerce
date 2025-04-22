@@ -91,7 +91,7 @@
 
         {{-- Carrusel de productos de la misma categoria --}}
         <div class="">
-            @livewire('products.product-carousel', ['category' => $product->subcategory->category, 'product' => $product])
+            @livewire('products.product-carousel', ['product' => $product])
         </div>
     </x-container>
 

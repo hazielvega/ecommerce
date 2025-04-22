@@ -16,7 +16,7 @@
         </a>
     </x-slot>
 
-    <div class="card">
+    <div class="card bg-gray-900">
         {{-- Lista de portadas --}}
         <ul class="space-y-4" id="covers">
             @foreach ($covers as $cover)

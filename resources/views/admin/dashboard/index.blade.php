@@ -9,26 +9,25 @@
 
         <!-- Tarjeta de Bienvenida -->
         <div
-            class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-md overflow-hidden border border-gray-100">
+            class="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl shadow-lg overflow-hidden border border-gray-700 transition-transform hover:scale-[1.02]">
             <div class="p-6 flex items-start">
                 <div class="flex-shrink-0">
-                    <img class="h-12 w-12 rounded-full object-cover ring-2 ring-white"
+                    <img class="h-12 w-12 rounded-full object-cover ring-2 ring-purple-500"
                         src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" />
                 </div>
                 <div class="ml-4">
-                    <h2 class="text-xl font-semibold text-gray-800">
-                        Bienvenido, {{ auth()->user()->name }}
+                    <h2 class="text-xl font-semibold text-purple-300">
+                        Bienvenido, <span class="text-white">{{ auth()->user()->name }}</span>
                     </h2>
-                    <p class="text-sm text-gray-500 mt-1">
+                    <p class="text-sm text-gray-400 mt-1">
+                        <i class="fas fa-clock mr-1 text-purple-400"></i>
                         Último acceso: {{ auth()->user()->last_login_at?->format('d/m/Y H:i') ?? 'Primer ingreso' }}
                     </p>
-                    <form action="{{ route('logout') }}" method="POST" class="mt-2">
+                    <form action="{{ route('logout') }}" method="POST" class="mt-3">
                         @csrf
-                        <button class="text-sm text-indigo-600 hover:text-indigo-800 flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                            </svg>
+                        <button
+                            class="text-sm text-purple-400 hover:text-purple-300 flex items-center transition-colors">
+                            <i class="fas fa-sign-out-alt mr-2"></i>
                             Cerrar sesión
                         </button>
                     </form>
@@ -38,28 +37,40 @@
 
         <!-- Tarjeta de Información de la Empresa -->
         <div
-            class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl shadow-md overflow-hidden border border-gray-100 col-span-2">
+            class="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl shadow-lg overflow-hidden border border-gray-700 col-span-2 transition-transform hover:scale-[1.02]">
             <div class="p-6">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-semibold text-gray-800">
-                        {{ config('app.name') }}
-                    </h2>
-                    <span class="px-3 py-1 bg-indigo-100 text-indigo-800 text-xs font-medium rounded-full">
+                    <div>
+                        <h2 class="text-xl font-semibold text-white">
+                            <i class="fas fa-building mr-2 text-purple-400"></i>
+                            {{ config('app.name') }}
+                        </h2>
+                        <p class="text-sm text-gray-400 mt-1">{{ config('app.description') }}</p>
+                    </div>
+                    <span class="px-3 py-1 bg-purple-900 text-purple-300 text-xs font-medium rounded-full shadow">
                         v{{ config('app.version') }}
                     </span>
                 </div>
 
                 <div class="mt-4 grid grid-cols-2 gap-4">
-                    <div class="bg-white p-3 rounded-lg shadow-sm">
-                        <p class="text-sm text-gray-500">Entorno</p>
-                        <p
-                            class="font-medium @if (app()->environment('production')) text-red-600 @else text-green-600 @endif">
-                            {{ strtoupper(config('app.env')) }}
+                    <div class="bg-gray-750 p-3 rounded-lg border border-gray-700">
+                        <p class="text-xs text-gray-400 uppercase tracking-wider">Entorno</p>
+                        <p class="font-medium mt-1 flex items-center">
+                            @if (app()->environment('production'))
+                                <span class="w-2 h-2 rounded-full bg-red-500 mr-2 animate-pulse"></span>
+                                <span class="text-red-400">PRODUCCIÓN</span>
+                            @else
+                                <span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                                <span class="text-green-400">{{ strtoupper(config('app.env')) }}</span>
+                            @endif
                         </p>
                     </div>
-                    <div class="bg-white p-3 rounded-lg shadow-sm">
-                        <p class="text-sm text-gray-500">Zona Horaria</p>
-                        <p class="font-medium">{{ config('app.timezone') }}</p>
+                    <div class="bg-gray-750 p-3 rounded-lg border border-gray-700">
+                        <p class="text-xs text-gray-400 uppercase tracking-wider">Zona Horaria</p>
+                        <p class="font-medium text-white mt-1 flex items-center">
+                            <i class="far fa-clock mr-2 text-purple-400"></i>
+                            {{ config('app.timezone') }}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -68,98 +79,138 @@
 
     <!-- Estadísticas Rápidas -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+        <!-- Órdenes Hoy -->
+        <div
+            class="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700 transition-all hover:border-purple-500 hover:shadow-purple-500/10">
             <div class="p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                        </svg>
+                    <div class="p-3 rounded-full bg-blue-900/30 text-blue-400">
+                        <i class="fas fa-shopping-bag text-lg"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Órdenes Hoy</p>
-                        <p class="text-2xl font-semibold text-gray-800">{{ $ordersToday }}</p>
+                        <p class="text-sm font-medium text-gray-400">Órdenes Hoy</p>
+                        <p class="text-2xl font-semibold text-white">{{ $ordersToday }}</p>
                     </div>
                 </div>
-                <div class="mt-4">
+                <div class="mt-4 flex items-center">
                     <span
-                        class="{{ $ordersPercentageChange >= 0 ? 'text-green-600' : 'text-red-600' }} text-sm font-medium">
-                        {{ $ordersPercentageChange >= 0 ? '+' : '' }}{{ $ordersPercentageChange }}% vs ayer
+                        class="{{ $ordersPercentageChange >= 0 ? 'text-green-400' : 'text-red-400' }} text-sm font-medium flex items-center">
+                        @if ($ordersPercentageChange >= 0)
+                            <i class="fas fa-arrow-up mr-1"></i>
+                        @else
+                            <i class="fas fa-arrow-down mr-1"></i>
+                        @endif
+                        {{ abs($ordersPercentageChange) }}% vs ayer
                     </span>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+        <!-- Clientes Nuevos -->
+        <div
+            class="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700 transition-all hover:border-purple-500 hover:shadow-purple-500/10">
             <div class="p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-green-100 text-green-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
+                    <div class="p-3 rounded-full bg-green-900/30 text-green-400">
+                        <i class="fas fa-users text-lg"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Clientes Nuevos</p>
-                        <p class="text-2xl font-semibold text-gray-800">{{ $newCustomersToday }}</p>
+                        <p class="text-sm font-medium text-gray-400">Clientes Nuevos</p>
+                        <p class="text-2xl font-semibold text-white">{{ $newCustomersToday }}</p>
                     </div>
                 </div>
-                <div class="mt-4">
+                <div class="mt-4 flex items-center">
                     <span
-                        class="{{ $customersPercentageChange >= 0 ? 'text-green-600' : 'text-red-600' }} text-sm font-medium">
-                        {{ $customersPercentageChange >= 0 ? '+' : '' }}{{ $customersPercentageChange }}% vs semana
-                        pasada
+                        class="{{ $customersPercentageChange >= 0 ? 'text-green-400' : 'text-red-400' }} text-sm font-medium flex items-center">
+                        @if ($customersPercentageChange >= 0)
+                            <i class="fas fa-arrow-up mr-1"></i>
+                        @else
+                            <i class="fas fa-arrow-down mr-1"></i>
+                        @endif
+                        {{ abs($customersPercentageChange) }}% vs semana pasada
                     </span>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+        <!-- Ingresos Hoy -->
+        <div
+            class="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700 transition-all hover:border-purple-500 hover:shadow-purple-500/10">
             <div class="p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
+                    <div class="p-3 rounded-full bg-yellow-900/30 text-yellow-400">
+                        <i class="fas fa-chart-line text-lg"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Ingresos Hoy</p>
-                        <p class="text-2xl font-semibold text-gray-800">${{ number_format($revenueToday, 2) }}</p>
+                        <p class="text-sm font-medium text-gray-400">Ingresos Hoy</p>
+                        <p class="text-2xl font-semibold text-white">${{ number_format($revenueToday, 2) }}</p>
                     </div>
                 </div>
-                <div class="mt-4">
+                <div class="mt-4 flex items-center">
                     <span
-                        class="{{ $revenuePercentageChange >= 0 ? 'text-green-600' : 'text-red-600' }} text-sm font-medium">
-                        {{ $revenuePercentageChange >= 0 ? '+' : '' }}{{ $revenuePercentageChange }}% vs ayer
+                        class="{{ $revenuePercentageChange >= 0 ? 'text-green-400' : 'text-red-400' }} text-sm font-medium flex items-center">
+                        @if ($revenuePercentageChange >= 0)
+                            <i class="fas fa-arrow-up mr-1"></i>
+                        @else
+                            <i class="fas fa-arrow-down mr-1"></i>
+                        @endif
+                        {{ abs($revenuePercentageChange) }}% vs ayer
                     </span>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+        <!-- Órdenes Pendientes -->
+        <div
+            class="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700 transition-all hover:border-purple-500 hover:shadow-purple-500/10">
             <div class="p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-full bg-red-100 text-red-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                    <div class="p-3 rounded-full bg-red-900/30 text-red-400">
+                        <i class="fas fa-clock text-lg"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Órdenes Pendientes</p>
-                        <p class="text-2xl font-semibold text-gray-800">{{ $pendingOrders }}</p>
+                        <p class="text-sm font-medium text-gray-400">Órdenes Pendientes</p>
+                        <p class="text-2xl font-semibold text-white">{{ $pendingOrders }}</p>
                     </div>
                 </div>
-                <div class="mt-4">
+                <div class="mt-4 flex items-center">
                     <span
-                        class="{{ $pendingPercentageChange <= 0 ? 'text-green-600' : 'text-red-600' }} text-sm font-medium">
-                        {{ $pendingPercentageChange <= 0 ? '' : '+' }}{{ $pendingPercentageChange }} vs semana pasada
+                        class="{{ $pendingPercentageChange <= 0 ? 'text-green-400' : 'text-red-400' }} text-sm font-medium flex items-center">
+                        @if ($pendingPercentageChange <= 0)
+                            <i class="fas fa-arrow-down mr-1"></i>
+                        @else
+                            <i class="fas fa-arrow-up mr-1"></i>
+                        @endif
+                        {{ abs($pendingPercentageChange) }} vs semana pasada
                     </span>
                 </div>
             </div>
         </div>
     </div>
+
+    {{-- <!-- Sección adicional para gráficos o más estadísticas -->
+    <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700 p-6 mb-8">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-white">
+                <i class="fas fa-chart-bar mr-2 text-purple-400"></i>
+                Resumen Semanal
+            </h3>
+            <div class="flex space-x-2">
+                <button
+                    class="px-3 py-1 text-xs bg-purple-900 text-purple-300 rounded-md hover:bg-purple-800 transition-colors">
+                    Esta semana
+                </button>
+                <button
+                    class="px-3 py-1 text-xs bg-gray-700 text-gray-400 rounded-md hover:bg-gray-600 transition-colors">
+                    Este mes
+                </button>
+            </div>
+        </div>
+
+        <!-- Espacio para gráficos -->
+        <div class="bg-gray-900 rounded-lg p-4 h-64 flex items-center justify-center border border-gray-700">
+            <p class="text-gray-500 italic">[Gráfico de estadísticas semanales]</p>
+        </div>
+    </div> --}}
 
 </x-admin-layout>

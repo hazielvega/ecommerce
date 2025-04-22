@@ -10,11 +10,8 @@
 
     <div class="space-y-8">
         {{-- Sección de Opciones --}}
-        <section class= "rounded-lg p-6 shadow-md">
-            <h2 class="text-xl font-bold text-white mb-4">Opciones del Sistema</h2>
-            <div class="rounded-md p-4">
-                @livewire('admin.options.manage-options')
-            </div>
+        <section>
+            @livewire('admin.options.manage-options')
         </section>
 
         {{-- Sección de Categorías --}}

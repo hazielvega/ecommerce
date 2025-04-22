@@ -51,10 +51,16 @@
                                         </div>
 
                                         {{-- Mensaje de stock insuficiente --}}
-                                        @if ($item->qty > $item->options['stock'])
+                                        @php
+                                            // Obtener la variante actual desde la base de datos
+                                            $currentVariant = \App\Models\Variant::find($item->options['variant_id']);
+                                            $currentStock = $currentVariant ? $currentVariant->stock : 0;
+                                        @endphp
+
+                                        @if ($item->qty > $currentStock)
                                             <div class="text-red-400 text-sm font-medium mb-2 flex items-center">
                                                 <i class="fas fa-exclamation-circle mr-2"></i>
-                                                Stock insuficiente (disponible: {{ $item->options['stock'] }})
+                                                Stock insuficiente (disponible: {{ $currentStock }})
                                             </div>
                                         @endif
 
@@ -96,13 +102,13 @@
                                                 <button
                                                     class="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                     wire:click="increase('{{ $item->rowId }}')"
-                                                    wire:loading.attr="disabled" @disabled($item->qty >= $item->options['stock'])>
+                                                    wire:loading.attr="disabled" @disabled($item->qty >= $currentStock)>
                                                     +
                                                 </button>
 
                                                 @if ($item->options['stock'] > 0)
                                                     <span class="text-xs text-gray-400 ml-2">Disponible:
-                                                        {{ $item->options['stock'] }}</span>
+                                                        {{ $currentStock }}</span>
                                                 @endif
                                             </div>
 

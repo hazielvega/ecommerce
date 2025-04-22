@@ -85,7 +85,7 @@
                                     </div>
 
                                     <div class="flex justify-between">
-                                        <span class="text-gray-400">Compra:</span>
+                                        <span class="text-gray-400">Costo:</span>
                                         <span
                                             class="font-mono text-yellow-400">${{ number_format($variant->purchase_price, 2) }}</span>
                                     </div>
@@ -132,7 +132,7 @@
                 </div>
 
                 <div>
-                    <x-label class="text-gray-300" value="Precio de Compra" />
+                    <x-label class="text-gray-300" value="Precio de costo" />
                     <x-input type="number" step="0.01"
                         class="w-full bg-gray-700 text-gray-200 border-gray-600 focus:border-purple-500"
                         wire:model="variantEdit.purchase_price" />
