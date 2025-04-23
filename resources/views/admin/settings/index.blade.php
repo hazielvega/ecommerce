@@ -14,33 +14,36 @@
             @livewire('admin.options.manage-options')
         </section>
 
-        {{-- Sección de Categorías --}}
-        <section class="rounded-lg p-6 shadow-md">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-white">Gestión de Categorías</h2>
-                <div class=" rounded-md p-2">
+        {{-- Sección de Categorias --}}
+        <section class="rounded-lg bg-gray-800 shadow-xl border border-gray-700">
+            <header class="border-b border-gray-700 px-6 py-4">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-xl font-bold text-purple-300">Gestión de Categorías</h1>
+
                     @livewire('admin.categories.create-category')
                 </div>
-            </div>
+            </header>
 
-            <div class=" rounded-md overflow-hidden">
+            <div class="p-6 bg-gray-900 rounded-lg">
                 @livewire('admin.categories.category-table')
             </div>
         </section>
 
-        {{-- Sección de Subcategorías --}}
-        <section class="rounded-lg p-6 shadow-md">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-white">Gestión de Subcategorías</h2>
-                <div class=" rounded-md p-2">
+        {{-- Sección de Subcategorias --}}
+        <section class="rounded-lg bg-gray-800 shadow-xl border border-gray-700">
+            <header class="border-b border-gray-700 px-6 py-4">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-xl font-bold text-purple-300">Gestión de Subcategorías</h1>
+
                     @livewire('admin.subcategories.subcategory-create')
                 </div>
-            </div>
+            </header>
 
-            <div class=" rounded-md overflow-hidden">
+            <div class="p-6 bg-gray-900 rounded-lg">
                 @livewire('admin.subcategories.subcategory-table')
             </div>
         </section>
+
     </div>
 
 

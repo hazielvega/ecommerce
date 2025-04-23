@@ -9,12 +9,6 @@
                 </h1>
                 <p class="text-gray-400 mt-1">Administra todas las órdenes de tu ecommerce</p>
             </div>
-            {{-- <a href="{{ route('admin.orders.create') }}">
-                <x-button class="bg-purple-600 hover:bg-purple-500">
-                    <i class="fas fa-plus mr-2"></i>
-                    Nueva Orden
-                </x-button>
-            </a> --}}
         </div>
 
         <!-- Estadísticas -->
@@ -39,11 +33,11 @@
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
             <!-- Buscador -->
             <div class="md:col-span-2">
-                <x-label class="text-gray-300 mb-1" value="Buscar Órdenes" />
+                <x-label class="text-gray-300 mb-1" value="Buscar Ordenes" />
                 <div class="relative">
-                    <x-input wire:model.debounce.500ms="search"
+                    <x-input wire:model.live.debounce.500ms="search"
                         class="w-full bg-gray-700 border-gray-600 text-white focus:ring-purple-500 pl-10"
-                        placeholder="ID, pago, cliente..." />
+                        placeholder="Nombre cliente o email..." />
                     <i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i>
                 </div>
             </div>
@@ -100,19 +94,6 @@
             <table class="min-w-full divide-y divide-gray-700">
                 <thead class="bg-gray-800">
                     <tr>
-                        {{-- <th scope="col"
-                            class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer"
-                            wire:click="sortBy('id')">
-                            <div class="flex items-center">
-                                ID
-                                @if ($sortField === 'id')
-                                    <i
-                                        class="fas fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} ml-1 text-purple-400"></i>
-                                @else
-                                    <i class="fas fa-sort ml-1 text-gray-400"></i>
-                                @endif
-                            </div>
-                        </th> --}}
                         <th scope="col"
                             class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                             Cliente
@@ -169,9 +150,6 @@
                 <tbody class="bg-gray-900 divide-y divide-gray-700">
                     @forelse($orders as $order)
                         <tr class="hover:bg-gray-800 transition-colors">
-                            {{-- <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                                #{{ $order->id }}
-                            </td> --}}
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-white">
                                     {{ $order->user->name ?? 'Cliente sin registro' }}</div>

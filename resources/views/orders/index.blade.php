@@ -22,7 +22,7 @@
                         <i class="fas fa-shopping-bag text-4xl text-gray-500 mb-4"></i>
                         <h2 class="text-xl font-medium text-gray-300 mb-2">No tienes pedidos aún</h2>
                         <p class="text-gray-500 mb-6">Cuando realices un pedido, aparecerá aquí</p>
-                        <a href="{{ route('home') }}"
+                        <a href="{{ route('welcome.index') }}"
                             class="inline-flex items-center px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors">
                             <i class="fas fa-store mr-2"></i>
                             Ir a la tienda

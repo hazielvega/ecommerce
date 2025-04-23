@@ -46,6 +46,7 @@
                         placeholder="Nombre o descripción..." />
                     <i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i>
                 </div>
+                {{-- @dump($search) --}}
             </div>
 
             <!-- Filtro por Estado -->
@@ -151,9 +152,12 @@
                                         class="flex-shrink-0 h-10 w-10 rounded-md bg-purple-900 flex items-center justify-center">
                                         <i class="fas fa-tag text-purple-400"></i>
                                     </div>
-                                    <div class="ml-4">
+                                    <div class="ml-4 w-40">
                                         <div class="text-sm font-medium text-white">{{ $offer->name }}</div>
-                                        <div class="text-sm text-gray-400 line-clamp-1">{{ $offer->description }}</div>
+                                        <div class="text-sm text-gray-400 truncate hover:line-clamp-none transition-all duration-200"
+                                            title="{{ $offer->description }}">
+                                            {{ $offer->description }}
+                                        </div>
                                     </div>
                                 </div>
                             </td>

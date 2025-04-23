@@ -247,7 +247,7 @@
         </x-container>
     </header>
 
-    @push('scripts')
+    @push('js')
         <script>
             Livewire.on('cartUpdated', (count) => {
                 const cartCount = document.getElementById('cart-count');

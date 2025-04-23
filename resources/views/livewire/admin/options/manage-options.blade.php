@@ -10,7 +10,7 @@
             </div>
         </header>
 
-        <div class="p-6">
+        <div class="p-6 bg-gray-900 rounded-lg">
             @if ($options->isEmpty())
                 <div class="text-center py-8 text-gray-400">
                     <i class="fas fa-box-open text-4xl mb-3"></i>
@@ -19,7 +19,7 @@
             @else
                 <div class="space-y-4">
                     @foreach ($options as $option)
-                        <div class="p-6 rounded-lg border border-gray-700 bg-gray-750 relative group hover:border-purple-500 transition-colors duration-200"
+                        <div class="p-6 bg-gray-800 rounded-lg border border-gray-700 bg-gray-750 relative group hover:border-purple-500 transition-colors duration-200"
                             wire:key="option-{{ $option->id }}">
                             {{-- Encabezado de opción --}}
                             <div class="absolute bg-gray-800 -top-3 text-purple-300 px-3 font-medium flex items-center">

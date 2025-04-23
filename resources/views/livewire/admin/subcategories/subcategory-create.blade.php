@@ -1,8 +1,8 @@
 <div>
     {{-- Botón para abrir el modal de creación --}}
-    <button wire:click="$set('open', true)" class="btn btn-indigo">
-        Nueva Subcategoría
-    </button>
+    <x-button wire:click="$set('open', true)" class="btn btn-indigo">
+        <i class="fas fa-plus mr-2"></i> Nueva Subcategoría
+    </x-button>
 
     {{-- Modal de creación --}}
     <x-dialog-modal wire:model="open">

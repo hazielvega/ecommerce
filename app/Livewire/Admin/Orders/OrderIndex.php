@@ -118,15 +118,19 @@ class OrderIndex extends Component
     {
         $today = Carbon::today()->toDateString();
 
-        $orders = Order::with(['user', 'orderItems'])
+        $orders = Order::with(['user', 'receiver', 'orderItems'])
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
-                    $q->where('id', 'like', '%' . $this->search . '%')
-                        ->orWhere('payment_id', 'like', '%' . $this->search . '%')
-                        ->orWhereHas('user', function ($q) {
-                            $q->where('name', 'like', '%' . $this->search . '%')
+                    $q->whereHas('user', function ($userQuery) {
+                        $userQuery->where('name', 'like', '%' . $this->search . '%')
+                            ->orWhere('email', 'like', '%' . $this->search . '%');
+                    })
+                        ->orWhereHas('receiver', function ($receiverQuery) {
+                            $receiverQuery->where('name', 'like', '%' . $this->search . '%')
+                                ->orWhere('last_name', 'like', '%' . $this->search . '%')
                                 ->orWhere('email', 'like', '%' . $this->search . '%');
-                        });
+                        })
+                        ->orWhere('id', 'like', '%' . $this->search . '%');
                 });
             })
             ->when($this->statusFilter !== 'all', function ($query) {

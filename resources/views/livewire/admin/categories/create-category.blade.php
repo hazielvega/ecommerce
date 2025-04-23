@@ -1,9 +1,9 @@
 <div>
     {{-- Boton para abrir el modal de creacion --}}
     <div>
-        <button wire:click="$set('open', true)" class="btn btn-indigo">
-            Nueva Categoria
-        </button>
+        <x-button wire:click="$set('open', true)" class="btn btn-indigo">
+            <i class="fas fa-plus mr-2"></i> Nueva Categoria
+        </x-button>
     </div>
 
     {{-- Modal de creacion --}}

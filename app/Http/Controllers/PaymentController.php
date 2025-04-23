@@ -136,6 +136,7 @@ class PaymentController extends Controller
             'receiver_id' => $receiver->id,
             'shipping_address_id' => $shipping_address->id,
             'billing_address_id' => $billing_address->id,
+            'billing_document' => $receiver->document_number,
             'payment_id' => null, // Temporal, se actualizará después
             'total' => $total,
             'status' => OrderStatus::Pendiente->value,
@@ -169,17 +170,7 @@ class PaymentController extends Controller
         $preferenceData = [
             'items' => $items,
             'payer' => [
-                'name' => $receiver->name,
-                'surname' => $receiver->last_name,
-                'email' => auth()->user()->email, // Usar email real del usuario
-                'phone' => [
-                    'number' => $receiver->phone
-                ],
-                'address' => [
-                    'street_name' => $shipping_address->calle,
-                    'street_number' => $shipping_address->numero,
-                    'zip_code' => $shipping_address->codigo_postal
-                ]
+                'email' => "test_user_123456@testuser.com",
             ],
             'auto_return' => 'approved',
             'back_urls' => [
@@ -187,7 +178,7 @@ class PaymentController extends Controller
                 'failure' => route('payment.failure'),
             ],
             'external_reference' => $order->id,
-            'notification_url' => route('payment.webhook'), // Para recibir notificaciones IPN
+            // 'notification_url' => route('payment.webhook'), // Para recibir notificaciones IPN
         ];
 
         try {
@@ -197,7 +188,7 @@ class PaymentController extends Controller
             // Actualizar la orden con el ID de la preferencia
             $order->update([
                 'payment_id' => $preference->id,
-                'card_number' => request('card_number') // Si estás capturando esta info
+                // 'card_number' => request('card_number') // Si estás capturando esta infon
             ]);
 
             return redirect()->away($preference->init_point);
