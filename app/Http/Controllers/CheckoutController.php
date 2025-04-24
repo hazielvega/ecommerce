@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\OrderStatus;
 use App\Mail\OrderCreatedMail;
 use App\Models\Address;
 use App\Models\Order;
@@ -30,50 +31,41 @@ class CheckoutController extends Controller
 
         // Calculo subtotal
         $subtotal = $content->sum(function ($item) {
-            return $item->subtotal;
+            return ($item->options['original_price'] ?? $item->price) * $item->qty;
+        });
+
+        $discount = $content->sum(function ($item) {
+            if (isset($item->options['offer'])) {
+                return ($item->options['original_price'] - $item->price) * $item->qty;
+            }
+            return 0;
         });
 
         // Defino el precio de envio
         $shipping = 10000;
 
         // Calculo el total
-        $total = $subtotal + $shipping;
+        $total = ($subtotal - $discount) + $shipping;
 
         $access_token = $this->generateAccessToken();
 
         $session_token = $this->generateSessionToken($access_token, $total);
 
-        // Direccion de envio
-        // Recupero la direccion de envio por defecto
-        if (!auth()->check()) {
-            $shipping_address = Address::where('session_id', session()->getId())
-                ->where('is_shipping', true)->first();
-        } else {
-            $shipping_address = Address::where('user_id', auth()->id())
-                ->where('is_shipping', true)->first();
-        }
+        $shipping_address = $this->getShippingAddress();
+        $billing_address = $this->getBillingAddress();
+        $receiver = $this->getReceiver();
 
-        // Direccion de facturacion
-        // Recupero la direccion de facturacion por defecto
-        if (!auth()->check()) {
-            $billing_address = Address::where('session_id', session()->getId())
-                ->where('is_billing', true)->first();
-        } else {
-            $billing_address = Address::where('user_id', auth()->id())
-                ->where('is_billing', true)->first();
-        }
-
-        // Destinatario
-        // Recupero el destinatario por defecto
-        if (!auth()->check()) {
-            $receiver = Receiver::where('session_id', session()->getId())->getId()
-                ->where('default', true)->first();
-        } else {
-            $receiver = Receiver::where('user_id', auth()->id())
-                ->where('default', true)->first();
-        }
-
-        return view('checkout.index', compact('content', 'subtotal', 'shipping', 'total', 'session_token', 'shipping_address', 'billing_address', 'receiver'));
+        return view('checkout.index', compact(
+            'content',
+            'subtotal',
+            'discount',
+            'shipping',
+            'total',
+            'session_token',
+            'shipping_address',
+            'billing_address',
+            'receiver'
+        ));
     }
 
     public function generateAccessToken()
@@ -117,7 +109,6 @@ class CheckoutController extends Controller
         return $response['sessionKey'];
     }
 
-    // Metodo para capturar el pago
     public function paid(Request $request)
     {
         $access_token = $this->generateAccessToken();
@@ -150,89 +141,164 @@ class CheckoutController extends Controller
         // Si la transacción fue exitosa, redireccionar a la vista de gracias
         if (isset($response['dataMap']) && $response['dataMap']['ACTION_CODE'] == '000') {
             Cart::instance('shopping');
-            // Filtro los items que no supere el stock
-            $content = Cart::content()->filter(function ($item) {
-                return $item->qty <= $item->options['stock'];
+            $hasInvalidItems = false;
+            $outOfStockProducts = [];
+            $validItems = collect();
+
+            // Verificar cada item en el carrito con stock actualizado
+            foreach (Cart::content() as $item) {
+                // Obtener la variante actual desde la base de datos
+                $variant = Variant::find($item->options['variant_id']);
+                $currentStock = $variant ? $variant->stock : 0;
+
+                // Verificar si el item es válido
+                if ($item->qty > $currentStock) {
+                    $hasInvalidItems = true;
+                    $outOfStockProducts[] = $item->name;
+                    continue;
+                }
+
+                // Si el item es válido, agregarlo a la colección
+                $validItems->push($item);
+            }
+
+            // Si hay items inválidos
+            if ($hasInvalidItems) {
+                $message = "Algunos productos no tienen suficiente stock disponible:";
+                $message .= "<ul class='list-disc pl-5 mt-2'>";
+                foreach ($outOfStockProducts as $productName) {
+                    $message .= "<li>{$productName}</li>";
+                }
+                $message .= "</ul>";
+
+                return redirect()->route('cart.index')->with([
+                    'error' => 'Productos sin stock suficiente',
+                    'error_details' => $message
+                ]);
+            }
+
+            // Si el carrito está vacío
+            if ($validItems->isEmpty()) {
+                return redirect()->route('cart.index')->with('error', 'No hay productos válidos en tu carrito');
+            }
+
+            // Verificar datos de envío y facturación
+            $shipping_address = $this->getShippingAddress();
+            $billing_address = $this->getBillingAddress();
+            $receiver = $this->getReceiver();
+            $shipping_price = 10000;
+
+            if (!$shipping_address || !$billing_address || !$receiver) {
+                return redirect()->route('checkout')->with('error', 'Completa tus datos de envío y facturación');
+            }
+
+            // Calcular totales con items válidos
+            $subtotal = $validItems->sum(function ($item) {
+                return ($item->options['original_price'] ?? $item->price) * $item->qty;
             });
-            // Recupero la direccion de envio por defecto
-            if (!auth()->check()) {
-                $shipping_address = Address::where('session_id', session()->getId())
-                    ->where('is_shipping', true)->first();
-            } else {
-                $shipping_address = Address::where('user_id', auth()->id())
-                    ->where('is_shipping', true)->first();
-            }
 
-            // Recupero la direccion de facturacion por defecto
-            if (!auth()->check()) {
-                $billing_address = Address::where('session_id', session()->getId())
-                    ->where('is_billing', true)->first();
-            } else {
-                $billing_address = Address::where('user_id', auth()->id())
-                    ->where('is_billing', true)->first();
-            }
+            $discount = $validItems->sum(function ($item) {
+                if (!empty($item->options['offer'])) {
+                    return ($item->options['original_price'] - $item->price) * $item->qty;
+                }
+                return 0;
+            });
 
-            // Recupero el destinatario por defecto
-            if (!auth()->check()) {
-                $receiver = Receiver::where('session_id', session()->getId())->getId()
-                    ->where('default', true)->first();
-            } else {
-                $receiver = Receiver::where('user_id', auth()->id())
-                    ->where('default', true)->first();
-            }
-
+            $total = ($subtotal - $discount) + $shipping_price;
 
             // Creo una nueva orden
             $order = Order::create([
-                'user_id' => auth()->check() ? auth()->id() : null,
+                'user_id' => auth()->id(),
                 'session_id' => session()->getId(),
                 'receiver_id' => $receiver->id,
                 'shipping_address_id' => $shipping_address->id,
                 'billing_address_id' => $billing_address->id,
+                'billing_document' => $receiver->document_number,
                 'payment_id' => $response['dataMap']['TRANSACTION_ID'],
-                'card_number' => $response['dataMap']['CARD'],
-                'total' => $response['dataMap']['AMOUNT'],
+                // 'card_number' => $response['dataMap']['CARD'],
+                'total' => $total,
+                'status' => OrderStatus::Pendiente->value,
+                'shipping_cost' => $shipping_price,
             ]);
-            // Recorro el carrito para crear los order_items
-            foreach (Cart::content() as $cartItem) {
-                // Recupero la variante
-                $variant = Variant::where('id', $cartItem->id)->first();
 
-                // Creo el order_item
+            // Crear items de la orden solo con productos válidos
+            foreach ($validItems as $item) {
                 OrderItem::create([
-                    'order_id' => Order::latest()->first()->id,
-                    'variant_id' => $variant->id,
-                    'quantity' => $cartItem->qty,
-                    'price' => $variant->sale_price,
-                    'subtotal' => $variant->sale_price * $cartItem->qty
+                    'order_id' => $order->id,
+                    'variant_id' => $item->options['variant_id'],
+                    'offer_id' => $item->options['offer']['offer_id'] ?? null,
+                    'quantity' => $item->qty,
+                    'price' => $item->price,
+                    'original_price' => $item->options['offer']['original_price'] ?? $item->price,
+                    'discount_percentage' => $item->options['offer']['discount_percent'] ?? 0,
+                    'subtotal' => $item->price * $item->qty,
                 ]);
             }
 
             // Genero el PDF
-            $pdf = Pdf::loadView('orders.ticket', compact('shipping_address', 'billing_address', 'receiver', 'order'))->setPaper('a4');
-            $pdf->save(storage_path('app/public/tickets/ticket-' . $order->id . '.pdf'));
-            $order->pdf_path = 'tickets/ticket-' . $order->id . '.pdf';
-            $order->save();
+            $this->generateOrderDocuments($order);
 
-            // Envía el PDF por correo al usuario autenticado o al correo del destinatario si no está registrado
-            if (auth()->check()) {
-                Mail::to(auth()->user()->email)->send(new OrderCreatedMail($order));
-            } else {
-                Mail::to($receiver->email)->send(new OrderCreatedMail($order));
+            // Actualizar estado de la orden a Processing
+            $order->update([
+                'status' => OrderStatus::Procesando->value,
+                // 'payment_id' => $preferenceId ?? $order->payment_id,
+            ]);
+
+            // Actualizar stock de las variantes
+            foreach ($order->items as $item) {
+                $variant = Variant::find($item->variant_id);
+                if ($variant) {
+                    $variant->decrement('stock', $item->quantity);
+                }
             }
 
-            // Actualizo el stock de las variantes
-            foreach ($content as $item) {
-                $variant = Variant::where('sku', $item->options['sku'])
-                    ->decrement('stock', $item->qty);
-                // Elimino el item del carrito
-                Cart::remove($item->rowId);
-            }
+            // Limpiar carrito
+            Cart::instance('shopping')->destroy();
 
 
-            return redirect()->route('gracias');
+            return redirect()->route('gracias', compact('order'));
         }
         // Sino, redireccionar a la vista de checkout
         return redirect()->route('checkout.index');
+    }
+
+    protected function generateOrderDocuments($order)
+    {
+        $pdf = Pdf::loadView('orders.ticket', [
+            'order' => $order,
+            'shipping_address' => $order->shippingAddress,
+            'billing_address' => $order->billingAddress,
+            'receiver' => $order->receiver,
+            'shipping_cost' => $order->shipping_cost,
+        ])->setPaper('a4');
+
+        $pdfPath = 'tickets/ticket-' . $order->id . '.pdf';
+        $pdf->save(storage_path('app/public/' . $pdfPath));
+        $order->update(['pdf_path' => $pdfPath]);
+
+        // Enviar email
+        $email = auth()->check() ? auth()->user()->email : $order->receiver->email;
+        Mail::to($email)->send(new OrderCreatedMail($order));
+    }
+
+    protected function getShippingAddress()
+    {
+        return auth()->check()
+            ? Address::where('user_id', auth()->id())->where('is_shipping', true)->first()
+            : Address::where('session_id', session()->getId())->where('is_shipping', true)->first();
+    }
+
+    protected function getBillingAddress()
+    {
+        return auth()->check()
+            ? Address::where('user_id', auth()->id())->where('is_billing', true)->first()
+            : Address::where('session_id', session()->getId())->where('is_billing', true)->first();
+    }
+
+    protected function getReceiver()
+    {
+        return auth()->check()
+            ? Receiver::where('user_id', auth()->id())->where('default', true)->first()
+            : Receiver::where('session_id', session()->getId())->where('default', true)->first();
     }
 }

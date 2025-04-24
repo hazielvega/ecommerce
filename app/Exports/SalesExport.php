@@ -59,7 +59,7 @@ class SalesExport implements FromCollection, WithHeadings, WithMapping, WithStyl
             ->join('products', 'variants.product_id', '=', 'products.id')
             ->join('subcategories', 'products.subcategory_id', '=', 'subcategories.id')
             ->join('categories', 'subcategories.category_id', '=', 'categories.id')
-            ->where('orders.status', OrderStatus::Completed->value)
+            ->where('orders.status', OrderStatus::Completado->value)
             ->groupBy([
                 'variants.id',
                 'products.name',

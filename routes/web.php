@@ -56,17 +56,17 @@ Route::get('/orders/{order}/download-ticket', [OrderController::class, 'download
 
 
 // MercadoPago
-Route::get('/checkout', [PaymentController::class, 'index'])->name('checkout.index');
-Route::post('/checkout/payment', [PaymentController::class, 'createPreference'])->name('payment.create');
-Route::get('/payment/success', [PaymentController::class, 'success'])->name('payment.success');
-Route::get('/payment/failure', [PaymentController::class, 'failure'])->name('payment.failure');
+// Route::get('/checkoutMP', [PaymentController::class, 'index'])->name('checkoutMP.index');
+// Route::post('/checkout/payment', [PaymentController::class, 'createPreference'])->name('payment.create');
+// Route::get('/payment/success', [PaymentController::class, 'success'])->name('payment.success');
+// Route::get('/payment/failure', [PaymentController::class, 'failure'])->name('payment.failure');
+// Route::get('/paymentMP/pending', [PaymentController::class, 'failure'])->name('payment.pending');
 
+// Route::get('/checkoutMP', [PaymentController::class, 'createPreference'])->name('payment.checkout');
 
 // Niubiz
-// Rutas para realizar una compra
-// Route::get('checkout', [CheckoutController::class, 'index'])->name('checkout.index')->middleware(EnsureCartIsNotEmpty::class);
-// // Ruta para capturar el pago
-// Route::post('checkout/paid', [CheckoutController::class, 'paid'])->name('checkout.paid');
+Route::get('checkout', [CheckoutController::class, 'index'])->name('checkout.index')->middleware(EnsureCartIsNotEmpty::class);
+Route::post('checkout/paid', [CheckoutController::class, 'paid'])->name('checkout.paid');
 
 Route::get('gracias', function () {
     return view('gracias');
@@ -81,20 +81,4 @@ Route::middleware([
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
-});
-
-Route::get('prueba', function () {
-    return view('payment.failure');
-});
-
-Route::get('/test-listener', function() {
-    $order = \App\Models\Order::first(); // Obtén una orden existente
-    $oldStatus = $order->status;
-    // $order->status = \App\Enums\OrderStatus::Shipped; // Cambia a un estado diferente
-
-    dd($oldStatus);
-    
-    // event(new \App\Events\OrderStatusUpdated($order, $oldStatus));
-    
-    // return 'Evento disparado';
 });

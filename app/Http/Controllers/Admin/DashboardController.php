@@ -46,7 +46,7 @@ class DashboardController extends Controller
             : 100;
 
         // 4. Órdenes pendientes
-        $pendingOrders = Order::where('status', 1)->count(); // Asumiendo que 1 es "Pending"
+        $pendingOrders = Order::where('status', 2)->count(); // Asumiendo que 1 es "Pending"
         $pendingOrdersLastWeek = Order::where('status', 1)
             ->whereBetween('created_at', [$lastWeek, $yesterday])
             ->count();

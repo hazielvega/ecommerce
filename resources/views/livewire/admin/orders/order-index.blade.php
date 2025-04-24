@@ -18,8 +18,8 @@
                 <p class="text-2xl font-bold text-white">{{ $totalOrders }}</p>
             </div>
             <div class="bg-gray-800 rounded-lg p-4 border border-yellow-900">
-                <p class="text-gray-400 text-sm">Órdenes Pendientes</p>
-                <p class="text-2xl font-bold text-yellow-400">{{ $pendingOrders }}</p>
+                <p class="text-gray-400 text-sm">Órdenes en proceso</p>
+                <p class="text-2xl font-bold text-yellow-400">{{ $processingOrders }}</p>
             </div>
             <div class="bg-gray-800 rounded-lg p-4 border border-green-900">
                 <p class="text-gray-400 text-sm">Órdenes Completadas</p>
@@ -37,7 +37,7 @@
                 <div class="relative">
                     <x-input wire:model.live.debounce.500ms="search"
                         class="w-full bg-gray-700 border-gray-600 text-white focus:ring-purple-500 pl-10"
-                        placeholder="Nombre cliente o email..." />
+                        placeholder="Número, cliente o email..." />
                     <i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i>
                 </div>
             </div>
@@ -96,6 +96,10 @@
                     <tr>
                         <th scope="col"
                             class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                            Número
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                             Cliente
                         </th>
                         <th scope="col"
@@ -150,6 +154,9 @@
                 <tbody class="bg-gray-900 divide-y divide-gray-700">
                     @forelse($orders as $order)
                         <tr class="hover:bg-gray-800 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                                #{{ $order->id }}
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-white">
                                     {{ $order->user->name ?? 'Cliente sin registro' }}</div>
@@ -208,9 +215,11 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-end items-center space-x-2">
                                     <div>
-                                        <x-button wire:click="downloadTicket({{ $order->id }})">
-                                            <i class="fas fa-file-pdf"></i> PDF
-                                        </x-button>
+                                        <a href="{{ route('orders.download', $order->id) }}">
+                                            <x-button>
+                                                <i class="fas fa-file-pdf"></i> PDF
+                                            </x-button>
+                                        </a>
                                     </div>
 
                                     <a href="{{ route('admin.orders.show', $order->id) }}">

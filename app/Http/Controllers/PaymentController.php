@@ -12,6 +12,7 @@ use App\Models\Variant;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Gloudemans\Shoppingcart\Facades\Cart;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
@@ -112,7 +113,7 @@ class PaymentController extends Controller
         $shipping_price = 10000;
 
         if (!$shipping_address || !$billing_address || !$receiver) {
-            return redirect()->route('checkout')->with('error', 'Completa tus datos de envío y facturación');
+            return redirect()->route('checkoutMP')->with('error', 'Completa tus datos de envío y facturación');
         }
 
         // Calcular totales con items válidos
@@ -176,27 +177,36 @@ class PaymentController extends Controller
             'back_urls' => [
                 'success' => route('payment.success'),
                 'failure' => route('payment.failure'),
+                'pending' => route('payment.pending'),
             ],
+            'auto_return' => 'approved',
             'external_reference' => $order->id,
-            // 'notification_url' => route('payment.webhook'), // Para recibir notificaciones IPN
         ];
 
         try {
             $client = new PreferenceClient();
             $preference = $client->create($preferenceData);
 
-            // Actualizar la orden con el ID de la preferencia
             $order->update([
                 'payment_id' => $preference->id,
-                // 'card_number' => request('card_number') // Si estás capturando esta infon
             ]);
 
-            return redirect()->away($preference->init_point);
-        } catch (MPApiException $e) {
-            // Si hay error, cambiar estado a Cancelled
-            $order->update(['status' => OrderStatus::Cancelado->value]);
+            return redirect($preference->init_point);
+        } catch (\MercadoPago\Exceptions\MPApiException $e) {
+            // Obtener el contenido detallado de la respuesta de la API
+            $apiResponse = $e->getApiResponse();
+            $content = $apiResponse->getContent();
 
-            return back()->with('error', 'Error al procesar el pago: ' . $e->getMessage());
+            // Registrar el contenido detallado del error
+            Log::error('Error al crear la preferencia de pago: ' . json_encode($content));
+
+
+            return redirect()->back()->withErrors('Ocurrió un error al procesar el pago. Por favor, intentá nuevamente.');
+        } catch (\Exception $e) {
+            // Capturar cualquier otra excepción
+            Log::error('Error inesperado al crear la preferencia de pago: ' . $e->getMessage());
+
+            return redirect()->back()->withErrors('Ocurrió un error inesperado. Por favor, intentá nuevamente.');
         }
     }
 

@@ -191,7 +191,7 @@
                                         }
                                     @endphp
                                     <span class="{{ $color }}">{{ $status }}</span>
-                                    ({{ $offer->start_date->diffInDays($offer->end_date) }} días)
+                                    ({{ number_format($offer->start_date->diffInDays($offer->end_date), 0) }} días)
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">

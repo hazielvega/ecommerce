@@ -263,6 +263,34 @@ class ShippingAddresses extends Component
         return redirect()->route('checkout.index');
     }
 
+    public function validateBeforeCheckoutMP()
+    {
+        // Verifica si hay direcciones y destinatarios disponibles
+        if ($this->addresses->isEmpty() || $this->receivers->isEmpty()) {
+            $message = "No puedes continuar con la compra debido a los siguientes problemas:\n";
+
+            if ($this->addresses->isEmpty()) {
+                $message .= "- No has seleccionado una dirección de envío y/o facturación.\n";
+            }
+
+            if ($this->receivers->isEmpty()) {
+                $message .= "- No has seleccionado un destinatario.\n";
+            }
+
+            // Emitir evento para mostrar alerta en la vista
+            $this->dispatch('swal', [
+                'icon' => 'warning',
+                'title' => 'Atención',
+                'text' => $message,
+            ]);
+
+            return;
+        }
+
+        // Si la validación es exitosa, redirigir al checkout
+        return redirect()->route('checkoutMP.index');
+    }
+
 
     public function render()
     {

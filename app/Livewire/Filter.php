@@ -129,6 +129,14 @@ class Filter extends Component
         $this->resetPage();
     }
 
+    public function resetFilters()
+    {
+        $this->selected_features = [];
+        $this->grouped_features = [];
+        $this->combinations = [];
+        $this->resetPage();
+    }
+
 
     public function render()
     {

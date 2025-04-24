@@ -169,7 +169,7 @@
                         <i class="fas fa-clock text-lg"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-400">Órdenes Pendientes</p>
+                        <p class="text-sm font-medium text-gray-400">Órdenes en Proceso</p>
                         <p class="text-2xl font-semibold text-white">{{ $pendingOrders }}</p>
                     </div>
                 </div>

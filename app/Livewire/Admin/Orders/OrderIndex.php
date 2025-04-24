@@ -130,7 +130,8 @@ class OrderIndex extends Component
                                 ->orWhere('last_name', 'like', '%' . $this->search . '%')
                                 ->orWhere('email', 'like', '%' . $this->search . '%');
                         })
-                        ->orWhere('id', 'like', '%' . $this->search . '%');
+                        ->orWhere('id', 'like', '%' . $this->search . '%')
+                        ->orWhere('id', '=', (int) $this->search); // Búsqueda exacta por ID numérico
                 });
             })
             ->when($this->statusFilter !== 'all', function ($query) {
@@ -156,7 +157,7 @@ class OrderIndex extends Component
             'statuses' => $this->getOrderStatuses(),
             'paymentMethods' => $this->getPaymentMethods(),
             'totalOrders' => Order::count(),
-            'pendingOrders' => Order::where('status', OrderStatus::Pendiente->value)->count(),
+            'processingOrders' => Order::where('status', OrderStatus::Procesando->value)->count(),
             'completedOrders' => Order::where('status', OrderStatus::Completado->value)->count(),
         ]);
     }

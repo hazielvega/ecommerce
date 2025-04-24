@@ -36,7 +36,7 @@
                                             class="flex items-center gap-3 px-3 py-2 hover:bg-gray-700 rounded-lg transition-colors duration-150">
                                             <x-checkbox value="{{ $feature['id'] }}" wire:model="selected_features"
                                                 class="h-5 w-5 text-indigo-600 border-gray-500 focus:ring-indigo-500 bg-gray-700 rounded" />
-                                            <span class="text-gray-300 text-sm">
+                                            <span class="text-gray-300 text-sm uppercase">
                                                 {{ $feature['description'] }}
                                             </span>
                                         </li>
